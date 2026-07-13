@@ -69,6 +69,6 @@ export default function PinkChat() {
           <button onClick={sendMessage}>Send</button>
         </div>
       </div>
-    </div>
+    </div>   // Dark mode fix v2
   )
   }
