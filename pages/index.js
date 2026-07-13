@@ -4,7 +4,10 @@ export default function App() {
   const [dark, setDark] = useState(true)
   const [activeContact, setActiveContact] = useState("Prof")
   const [input, setInput] = useState("")
+  const [recording, setRecording] = useState(false)
   const fileInputRef = useRef(null)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
   
   const [contacts, setContacts] = useState({
     Prof: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1", personality: "Sweet"},
@@ -34,13 +37,13 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [chats, activeContact])
 
-  const sendMessage = (imageUrl = null) => {
-    if(!input.trim() &&!imageUrl) return
+  const sendMessage = (imageUrl = null, audioUrl = null) => {
+    if(!input.trim() &&!imageUrl &&!audioUrl) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    const newMsg = {text: input, image: imageUrl, time, sender: "me"}
+    const newMsg = {text: input, image: imageUrl, audio: audioUrl, time, sender: "me"}
     setChats({...chats, [activeContact]: [...chats[activeContact], newMsg]})
     setInput("")
-    setTimeout(() => aiReply(input, imageUrl), 800)
+    setTimeout(() => aiReply(input, imageUrl, audioUrl), 800)
   }
 
   const handleFileUpload = (e) => {
@@ -51,11 +54,31 @@ export default function App() {
     }
   }
 
-  const aiReply = (msg, imageUrl) => {
+  const startRecording = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorderRef.current = new MediaRecorder(stream)
+    audioChunksRef.current = []
+    mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data)
+    mediaRecorderRef.current.onstop = () => {
+      const audioBlob = new Blob(audioChunksRef.current)
+      const audioUrl = URL.createObjectURL(audioBlob)
+      sendMessage(null, audioUrl)
+    }
+    mediaRecorderRef.current.start()
+    setRecording(true)
+  }
+
+  const stopRecording = () => {
+    mediaRecorderRef.current.stop()
+    setRecording(false)
+  }
+
+  const aiReply = (msg, imageUrl, audioUrl) => {
     const personality = contacts[activeContact].personality
     let reply = "Tell me more"
     
-    if(imageUrl) reply = "Nice picture! 😍 What is this?"
+    if(audioUrl) reply = "I heard your voice note! 🔊 What you saying?"
+    else if(imageUrl) reply = "Nice picture! 😍 What is this?"
     else {
       if(personality === "Sweet") reply = "aww I love that! You're making me blush 🥰"
       if(personality === "Chill") reply = "no stress babe, we dey chill 😎"
@@ -104,6 +127,7 @@ export default function App() {
           <div key={i} style={{textAlign: m.sender==="me"? "right" : "left", margin: "8px 0"}}>
             <span style={{background: m.sender==="me"? "#ff69b4" : aiMsgBg, color: m.sender==="me"? "#fff" : aiMsgText, padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "70%"}}>
               {m.image && <img src={m.image} alt="upload" style={{maxWidth: "200px", borderRadius: "10px", marginBottom: "5px"}}/>}
+              {m.audio && <audio src={m.audio} controls style={{width: "200px"}}/>}
               {m.text}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
@@ -113,10 +137,19 @@ export default function App() {
       </div>
 
       <div style={{display: "flex", marginTop: "10px", gap: "10px"}}>
-        {/* PICTURE BUTTON */}
         <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: "none"}}/>
         <button onClick={() => fileInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
           📎
+        </button>
+
+        {/* VOICE BUTTON */}
+        <button 
+          onMouseDown={startRecording} 
+          onMouseUp={stopRecording}
+          onTouchStart={startRecording}
+          onTouchEnd={stopRecording}
+          style={{background: recording? "red" : "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
+          {recording? "🔴" : "🎤"}
         </button>
 
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
