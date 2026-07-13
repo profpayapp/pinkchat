@@ -1,81 +1,20 @@
-import { useState, useEffect } from "react"
+const sendMessage = () => {
+  if(message.trim() === "") return
+  const newMsg = {text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "me"}
 
-export default function Home() {
-  const [theme, setTheme] = useState("light")
-  const [activeContact, setActiveContact] = useState("Luna")
-  const [message, setMessage] = useState("")
-  const [isTyping, setIsTyping] = useState(false)
-  const [chats, setChats] = useState({
-    Luna: [{text: "Hey! Ready to test PinkChat? 💖", time: "10:30 AM", sender: "them"}],
-    Coral: [{text: "Hi! This is Coral", time: "10:31 AM", sender: "them"}],
-    Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}]
-  })
+  const updatedChats = {...chats, [activeContact]: [...chats[activeContact], newMsg]}
+  setChats(updatedChats)
+  setMessage("")
 
-  useEffect(() => {
-    const savedChats = localStorage.getItem("pinkchat-chats")
-    const savedTheme = localStorage.getItem("pinkchat-theme")
-    if(savedChats) setChats(JSON.parse(savedChats))
-    if(savedTheme) setTheme(savedTheme)
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem("pinkchat-chats", JSON.stringify(chats))
-  }, [chats])
-
-  useEffect(() => {
-    localStorage.setItem("pinkchat-theme", theme)
-  }, [theme])
-
-  const bgColor = theme === "dark"? "#0f0f0f" : "#fff0f5"
-  const textColor = theme === "dark"? "#fff" : "#000"
-  const chatBg = theme === "dark"? "#1a1a1a" : "#ffe4ec"
-  const buttonBg = theme === "dark"? "#333" : "#fff"
-
-  const getSmartReply = (contact, userMsg) => {
-    const msg = userMsg.toLowerCase()
-    
-    if(contact === "Luna") {
-      if(msg.includes("sad") || msg.includes("bad")) return "come here, I got you. You deserve better 💖"
-      if(msg.includes("love") || msg.includes("cute")) return "aww stop you're making me blush 🥰"
-      if(msg.includes("miss")) return "I miss you too 😭 when are we talking again?"
-      if(msg.includes("busy")) return "it's okay, I understand. Just don't forget me okay?"
-      return ["you're so sweet", "tell me more", "you always make my day", "he ok 💖"][Math.floor(Math.random()*4)]
-    }
-    
-    if(contact === "Coral") {
-      if(msg.includes("nice") || msg.includes("something")) return "you're lowkey the coolest person I know fr 😎"
-      if(msg.includes("bored") || msg.includes("do")) return "let's cause some trouble then 😈 what we doing?"
-      if(msg.includes("game") || msg.includes("play")) return "bet let's run it! You picking the game"
-      if(msg.includes("money") || msg.includes("bro")) return "no cap we gon be rich one day 💰"
-      return ["bet", "fr??", "say less", "deadass 💀"][Math.floor(Math.random()*4)]
-    }
-    
-    if(contact === "Indigo") {
-      if(msg.includes("mind") || msg.includes("think") || msg.includes("feel")) return "I hear you. What's really going on?"
-      if(msg.includes("sad") || msg.includes("down")) return "It's okay to feel that way. I'm here with you 💜"
-      if(msg.includes("today") || msg.includes("have")) return "For you today? Clarity, peace, and strength"
-      if(msg.includes("thanks") || msg.includes("help")) return "Anytime. That's what real ones do"
-      return ["That makes sense", "I'm listening", "Take your time", "You got this 💜"][Math.floor(Math.random()*4)]
-    }
-  }
-
-  const sendMessage = () => {
-    if(message.trim() === "") return
-    const newMsg = {text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "me"}
-    
-    const updatedChats = {...chats, [activeContact]: [...chats[activeContact], newMsg]}
-    setChats(updatedChats)
-    setMessage("")
-
-    // TYPING INDICATOR
-    setIsTyping(true)
-    setTimeout(() => {
-      setIsTyping(false)
-      const replyText = getSmartReply(activeContact, message)
-      const replyMsg = {text: replyText, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "them"}
-      setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], replyMsg]}))
-    }, 1500)
-  }
+  // TYPING INDICATOR FIX
+  setIsTyping(true)
+  setTimeout(() => {
+    setIsTyping(false)
+    const replyText = getSmartReply(activeContact, message)
+    const replyMsg = {text: replyText, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "them"}
+    setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], replyMsg]}))
+  }, 2000) // 2 seconds typing
+}
 
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "20px", transition: "all 0.3s"}}>
