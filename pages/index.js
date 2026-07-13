@@ -74,7 +74,6 @@ export default function App() {
     }
   }
 
-  // HOLD TO RECORD - FIXED FOR SAMSUNG
   const startHold = (type) => {
     holdTimerRef.current = setTimeout(() => {
       startRecording(type)
@@ -107,7 +106,7 @@ export default function App() {
       setRecording(true)
       setRecordingType(type)
     } catch(err) {
-      alert("Please allow camera/microphone permission in browser settings")
+      alert("Please allow camera/microphone permission")
     }
   }
 
@@ -143,40 +142,40 @@ export default function App() {
   }
 
   return (
-    <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "20px", transition: "all 0.3s", fontFamily: "Arial"}}>
+    <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px", transition: "all 0.3s", fontFamily: "Arial"}}>
       
-      <h1 style={{color: "#ff69b4", fontSize: "32px", fontWeight: "bold", letterSpacing: "2px"}}>
+      <h1 style={{color: "#ff69b4", fontSize: "28px", fontWeight: "bold", letterSpacing: "2px", margin: "5px 0"}}>
         CRYPTO-PROF 💖
       </h1>
-      <p style={{fontSize: "12px", opacity: 0.7, marginTop: "-5px"}}>
+      <p style={{fontSize: "11px", opacity: 0.7, marginTop: "-5px"}}>
         AI Chat by Crypto-Prof - PREMIUM
       </p>
 
-      <div style={{margin: "10px 0", display: "flex", gap: "10px", flexWrap: "wrap"}}>
+      <div style={{margin: "8px 0", display: "flex", gap: "6px", flexWrap: "wrap"}}>
         {Object.keys(contacts).map(name => (
           <button key={name} onClick={() => setActiveContact(name)} 
-            style={{background: activeContact===name? contacts[name].color : "#333", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold"}}>
+            style={{background: activeContact===name? contacts[name].color : "#333", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "15px", cursor: "pointer", fontWeight: "bold", fontSize: "12px"}}>
             {name}
           </button>
         ))}
-        <button onClick={() => setDark(!dark)} style={{background: "#555", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "20px"}}>
-          Toggle Light
+        <button onClick={() => setDark(!dark)} style={{background: "#555", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "15px", fontSize: "12px"}}>
+          Light
         </button>
-        <button onClick={clearChat} style={{background: "red", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "20px"}}>
-          Clear Chat
+        <button onClick={clearChat} style={{background: "red", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "15px", fontSize: "12px"}}>
+          Clear
         </button>
       </div>
 
-      <div style={{background: chatBg, padding: "15px", borderRadius: "10px", height: "400px", overflowY: "auto"}}>
-        <h3>{activeContact} ({contacts[activeContact].personality})</h3>
+      <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "55vh", overflowY: "auto"}}>
+        <h3 style={{margin: "5px 0"}}>{activeContact} ({contacts[activeContact].personality})</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender==="me"? "right" : "left", margin: "8px 0"}}>
-            <span style={{background: m.sender==="me"? "#ff69b4" : aiMsgBg, color: m.sender==="me"? "#fff" : aiMsgText, padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "70%"}}>
-              {m.image && <img src={m.image} alt="upload" style={{maxWidth: "200px", borderRadius: "10px", marginBottom: "5px"}}/>}
-              {m.audio && <audio src={m.audio} controls style={{width: "200px"}}/>}
-              {m.video && <video src={m.video} controls style={{maxWidth: "200px", borderRadius: "10px"}}/>}
-              {m.doc && <div style={{padding: "10px", background: "#333", borderRadius: "8px"}}>📄 {m.doc}</div>}
-              {m.text}
+            <span style={{background: m.sender==="me"? "#ff69b4" : aiMsgBg, color: m.sender==="me"? "#fff" : aiMsgText, padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%"}}>
+              {m.image && <img src={m.image} alt="upload" style={{maxWidth: "180px", borderRadius: "10px", marginBottom: "5px", display: "block"}}/>}
+              {m.audio && <audio src={m.audio} controls style={{width: "180px"}}/>}
+              {m.video && <video src={m.video} controls style={{maxWidth: "180px", borderRadius: "10px", display: "block"}}/>}
+              {m.doc && <div style={{padding: "8px", background: "#333", borderRadius: "8px", fontSize: "12px"}}>📄 {m.doc}</div>}
+              {m.text && <div style={{marginTop: m.image || m.video || m.audio || m.doc? "5px" : "0"}}>{m.text}</div>}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
           </div>
@@ -184,54 +183,62 @@ export default function App() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* FIXED BUTTON LAYOUT - LIKE WHATSAPP */}
-      <div style={{display: "flex", marginTop: "10px", gap: "8px", alignItems: "center"}}>
-        
-        {/* MEDIA BUTTONS GROUP */}
-        <div style={{display: "flex", gap: "8px"}}>
-          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: "none"}}/>
-          <button onClick={() => fileInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "12px", borderRadius: "50%", width: "45px", height: "45px"}}>
-            📎
-          </button>
-
-          <input type="file" accept="video/*" capture="user" ref={videoInputRef} onChange={handleVideoUpload} style={{display: "none"}}/>
-          <button onClick={() => videoInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "12px", borderRadius: "50%", width: "45px", height: "45px"}}>
-            🎥
-          </button>
-
-          <input type="file" accept=".pdf,.doc,.docx,.txt" ref={docInputRef} onChange={handleDocUpload} style={{display: "none"}}/>
-          <button onClick={() => docInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "12px", borderRadius: "50%", width: "45px", height: "45px"}}>
-            📄
+      {/* FIXED BOTTOM BAR - 2 ROWS FOR MOBILE */}
+      <div style={{marginTop: "8px"}}>
+        {/* ROW 1: INPUT + SEND */}
+        <div style={{display: "flex", gap: "8px", marginBottom: "8px"}}>
+          <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
+            placeholder="Message" 
+            style={{flex: 1, padding: "12px", borderRadius: "25px", border: "none", outline: "none", fontSize: "14px"}}/>
+          <button onClick={() => sendMessage()} style={{background: "#ff69b4", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "25px", fontWeight: "bold", fontSize: "14px", whiteSpace: "nowrap"}}>
+            Send
           </button>
         </div>
 
-        {/* RECORD BUTTONS */}
-        <button 
-          onTouchStart={() => startHold('audio')}
-          onTouchEnd={endHold}
-          onMouseDown={() => startHold('audio')}
-          onMouseUp={endHold}
-          onMouseLeave={endHold}
-          style={{background: recording && recordingType==='audio'? "red" : "#555", color: "#fff", border: "none", padding: "12px", borderRadius: "50%", width: "45px", height: "45px"}}>
-          {recording && recordingType==='audio'? "🔴" : "🎤"}
-        </button>
+        {/* ROW 2: MEDIA BUTTONS WITH LABELS */}
+        <div style={{display: "flex", gap: "10px", justifyContent: "space-around"}}>
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: "none"}}/>
+          <button onClick={() => fileInputRef.current.click()} style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
+            <div style={{background: "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>📎</div>
+            Gallery
+          </button>
 
-        <button 
-          onTouchStart={() => startHold('video')}
-          onTouchEnd={endHold}
-          onMouseDown={() => startHold('video')}
-          onMouseUp={endHold}
-          onMouseLeave={endHold}
-          style={{background: recording && recordingType==='video'? "red" : "#555", color: "#fff", border: "none", padding: "12px", borderRadius: "50%", width: "45px", height: "45px"}}>
-          {recording && recordingType==='video'? "🔴" : "📹"}
-        </button>
+          <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoUpload} style={{display: "none"}}/>
+          <button onClick={() => videoInputRef.current.click()} style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
+            <div style={{background: "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>🎥</div>
+            Video
+          </button>
 
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
-          placeholder="Message" 
-          style={{flex: 1, padding: "12px", borderRadius: "25px", border: "none", outline: "none"}}/>
-        <button onClick={() => sendMessage()} style={{background: "#ff69b4", color: "#fff", border: "none", padding: "12px 18px", borderRadius: "25px", fontWeight: "bold"}}>
-          Send
-        </button>
+          <input type="file" accept=".pdf,.doc,.docx,.txt" ref={docInputRef} onChange={handleDocUpload} style={{display: "none"}}/>
+          <button onClick={() => docInputRef.current.click()} style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
+            <div style={{background: "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>📄</div>
+            Doc
+          </button>
+
+          <button 
+            onTouchStart={() => startHold('audio')}
+            onTouchEnd={endHold}
+            onMouseDown={() => startHold('audio')}
+            onMouseUp={endHold}
+            style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
+            <div style={{background: recording && recordingType==='audio'? "red" : "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>
+              {recording && recordingType==='audio'? "🔴" : "🎤"}
+            </div>
+            Voice
+          </button>
+
+          <button 
+            onTouchStart={() => startHold('video')}
+            onTouchEnd={endHold}
+            onMouseDown={() => startHold('video')}
+            onMouseUp={endHold}
+            style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
+            <div style={{background: recording && recordingType==='video'? "red" : "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>
+              {recording && recordingType==='video'? "🔴" : "📹"}
+            </div>
+            Live
+          </button>
+        </div>
       </div>
     </div>
   )
