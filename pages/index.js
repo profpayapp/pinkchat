@@ -5,9 +5,13 @@ export default function App() {
   const [activeContact, setActiveContact] = useState("Prof")
   const [input, setInput] = useState("")
   const [recording, setRecording] = useState(false)
+  const [recordingType, setRecordingType] = useState(null) // 'audio' or 'video'
   const fileInputRef = useRef(null)
+  const videoInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
+  const mediaStreamRef = useRef(null)
   const audioChunksRef = useRef([])
+  const holdTimerRef = useRef(null)
   
   const [contacts, setContacts] = useState({
     Prof: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1", personality: "Sweet"},
@@ -37,13 +41,13 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [chats, activeContact])
 
-  const sendMessage = (imageUrl = null, audioUrl = null) => {
-    if(!input.trim() &&!imageUrl &&!audioUrl) return
+  const sendMessage = (imageUrl = null, audioUrl = null, videoUrl = null) => {
+    if(!input.trim() &&!imageUrl &&!audioUrl &&!videoUrl) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    const newMsg = {text: input, image: imageUrl, audio: audioUrl, time, sender: "me"}
+    const newMsg = {text: input, image: imageUrl, audio: audioUrl, video: videoUrl, time, sender: "me"}
     setChats({...chats, [activeContact]: [...chats[activeContact], newMsg]})
     setInput("")
-    setTimeout(() => aiReply(input, imageUrl, audioUrl), 800)
+    setTimeout(() => aiReply(input, imageUrl, audioUrl, videoUrl), 800)
   }
 
   const handleFileUpload = (e) => {
@@ -54,30 +58,63 @@ export default function App() {
     }
   }
 
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    mediaRecorderRef.current = new MediaRecorder(stream)
-    audioChunksRef.current = []
-    mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data)
-    mediaRecorderRef.current.onstop = () => {
-      const audioBlob = new Blob(audioChunksRef.current)
-      const audioUrl = URL.createObjectURL(audioBlob)
-      sendMessage(null, audioUrl)
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0]
+    if(file) {
+      const videoUrl = URL.createObjectURL(file)
+      sendMessage(null, null, videoUrl)
     }
-    mediaRecorderRef.current.start()
-    setRecording(true)
+  }
+
+  // FIXED: HOLD TO RECORD
+  const startHold = (type) => {
+    holdTimerRef.current = setTimeout(() => {
+      startRecording(type)
+    }, 300) // hold 0.3s to start
+  }
+  const cancelHold = () => {
+    clearTimeout(holdTimerRef.current)
+  }
+  const endHold = () => {
+    cancelHold()
+    if(recording) stopRecording()
+  }
+
+  const startRecording = async (type) => {
+    try {
+      const constraints = type === 'video'? { audio: true, video: true } : { audio: true }
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      mediaStreamRef.current = stream
+      mediaRecorderRef.current = new MediaRecorder(stream)
+      audioChunksRef.current = []
+      mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data)
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, {type: type === 'video'? 'video/webm' : 'audio/webm'})
+        const url = URL.createObjectURL(blob)
+        if(type === 'video') sendMessage(null, null, url)
+        else sendMessage(null, url)
+        stream.getTracks().forEach(track => track.stop())
+      }
+      mediaRecorderRef.current.start()
+      setRecording(true)
+      setRecordingType(type)
+    } catch(err) {
+      alert("Please allow camera/microphone permission")
+    }
   }
 
   const stopRecording = () => {
-    mediaRecorderRef.current.stop()
+    if(mediaRecorderRef.current) mediaRecorderRef.current.stop()
     setRecording(false)
+    setRecordingType(null)
   }
 
-  const aiReply = (msg, imageUrl, audioUrl) => {
+  const aiReply = (msg, imageUrl, audioUrl, videoUrl) => {
     const personality = contacts[activeContact].personality
     let reply = "Tell me more"
     
-    if(audioUrl) reply = "I heard your voice note! 🔊 What you saying?"
+    if(videoUrl) reply = "Omo this video is fire! 🔥 What are we watching?"
+    else if(audioUrl) reply = "I heard your voice note! 🔊 Send more gist"
     else if(imageUrl) reply = "Nice picture! 😍 What is this?"
     else {
       if(personality === "Sweet") reply = "aww I love that! You're making me blush 🥰"
@@ -103,7 +140,7 @@ export default function App() {
         CRYPTO-PROF 💖
       </h1>
       <p style={{fontSize: "12px", opacity: 0.7, marginTop: "-5px"}}>
-        AI Chat by Crypto-Prof
+        AI Chat by Crypto-Prof - PREMIUM
       </p>
 
       <div style={{margin: "10px 0", display: "flex", gap: "10px", flexWrap: "wrap"}}>
@@ -128,6 +165,7 @@ export default function App() {
             <span style={{background: m.sender==="me"? "#ff69b4" : aiMsgBg, color: m.sender==="me"? "#fff" : aiMsgText, padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "70%"}}>
               {m.image && <img src={m.image} alt="upload" style={{maxWidth: "200px", borderRadius: "10px", marginBottom: "5px"}}/>}
               {m.audio && <audio src={m.audio} controls style={{width: "200px"}}/>}
+              {m.video && <video src={m.video} controls style={{maxWidth: "200px", borderRadius: "10px"}}/>}
               {m.text}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
@@ -136,20 +174,36 @@ export default function App() {
         <div ref={chatEndRef} />
       </div>
 
-      <div style={{display: "flex", marginTop: "10px", gap: "10px"}}>
+      <div style={{display: "flex", marginTop: "10px", gap: "10px", alignItems: "center"}}>
         <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: "none"}}/>
         <button onClick={() => fileInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
           📎
         </button>
 
-        {/* VOICE BUTTON */}
+        <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoUpload} style={{display: "none"}}/>
+        <button onClick={() => videoInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
+          🎥
+        </button>
+
+        {/* FIXED VOICE + NEW VIDEO RECORD BUTTON */}
         <button 
-          onMouseDown={startRecording} 
-          onMouseUp={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
-          style={{background: recording? "red" : "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
-          {recording? "🔴" : "🎤"}
+          onTouchStart={() => startHold('audio')}
+          onTouchEnd={endHold}
+          onMouseDown={() => startHold('audio')}
+          onMouseUp={endHold}
+          onMouseLeave={endHold}
+          style={{background: recording && recordingType==='audio'? "red" : "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
+          {recording && recordingType==='audio'? "🔴" : "🎤"}
+        </button>
+
+        <button 
+          onTouchStart={() => startHold('video')}
+          onTouchEnd={endHold}
+          onMouseDown={() => startHold('video')}
+          onMouseUp={endHold}
+          onMouseLeave={endHold}
+          style={{background: recording && recordingType==='video'? "red" : "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
+          {recording && recordingType==='video'? "🔴" : "📹"}
         </button>
 
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
