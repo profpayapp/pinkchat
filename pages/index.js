@@ -6,15 +6,19 @@ export default function App() {
   const [input, setInput] = useState("")
   const [contacts, setContacts] = useState({
     Prof: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1", personality: "Sweet"},
-    Coral: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3", personality: "Chill"},
+    Queen: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3", personality: "Chill"},
     Indigo: {color: "#6a5acd", img: "https://i.pravatar.cc/150?img=5", personality: "Wise"},
-    Boss: {color: "#00bfff", img: "https://i.pravatar.cc/150?img=11", personality: "Motivator"}
+    Boss: {color: "#00bfff", img: "https://i.pravatar.cc/150?img=11", personality: "Motivator"},
+    Tech: {color: "#32cd32", img: "https://i.pravatar.cc/150?img=8", personality: "Coder"},
+    Gist: {color: "#ffa500", img: "https://i.pravatar.cc/150?img=15", personality: "Gossip"}
   })
   const [chats, setChats] = useState({
     Prof: [{text: "Hey! Ready to test Crypto-Prof? 💖", time: "10:30 AM", sender: "them"}],
-    Coral: [{text: "Hi! This is Coral", time: "10:31 AM", sender: "them"}],
-    Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}],
-    Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}]
+    Queen: [{text: "Hey babe, what's the gist? 😘", time: "10:31 AM", sender: "them"}],
+    Indigo: [{text: "Indigo here! Let's think deep 👋", time: "10:32 AM", sender: "them"}],
+    Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}],
+    Tech: [{text: "Code dey run? Need any bug fixed? 💻", time: "10:34 AM", sender: "them"}],
+    Gist: [{text: "Omo you hear the latest gist? 😂", time: "10:35 AM", sender: "them"}]
   })
   const chatEndRef = useRef(null)
 
@@ -22,7 +26,7 @@ export default function App() {
   const textColor = dark? "#ffffff" : "#000"
   const chatBg = dark? "#1a1a1a" : "#f1f1f1"
   const aiMsgBg = dark? "#444" : "#e0e0e0"
-  const aiMsgText = dark? "#fff" : "#000" // FIX 1: Text readable in light mode
+  const aiMsgText = dark? "#fff" : "#000"
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -40,13 +44,16 @@ export default function App() {
   const aiReply = (msg) => {
     const personality = contacts[activeContact].personality
     let reply = "Tell me more"
+    
     if(personality === "Sweet") {
       if(msg.includes("sad")) reply = "come here, I got you. You deserve better 💖"
       else reply = "aww I love that! You're making me blush 🥰"
     }
-    if(personality === "Chill") reply = "no stress bro, we dey chill 😎"
+    if(personality === "Chill") reply = "no stress babe, we dey chill 😎"
     if(personality === "Wise") reply = "Interesting. Have you considered the bigger picture?"
     if(personality === "Motivator") reply = "That's fire! Now let's go 10x it. What's the next move?"
+    if(personality === "Coder") reply = "That code is clean! But we can optimize it more 💻"
+    if(personality === "Gossip") reply = "Nooo tell me everything! I need all the tea ☕😂"
     
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: "them"}]}))
