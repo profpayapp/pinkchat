@@ -32,7 +32,12 @@ export default function Home() {
           <button 
             key={contact}
             onClick={() => setActiveContact(contact)}
-            style={{margin: "5px", padding: "8px 15px", background: activeContact === contact? "#ff69b4" : buttonBg, color: activeContact === contact? "#fff" : textColor, border: "none", borderRadius: "8px", cursor: "pointer"}}
+            style={{margin: "5px", padding: "8px 15px", 
+              background: activeContact === contact? 
+                (contact === "Luna"? "#ff69b4" : contact === "Coral"? "#ff7f50" : "#6a5acd") 
+                : buttonBg, 
+              color: activeContact === contact? "#fff" : textColor, 
+              border: "none", borderRadius: "8px", cursor: "pointer"}}
           >
             {contact}
           </button>
