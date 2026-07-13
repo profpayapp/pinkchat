@@ -11,7 +11,7 @@ export default function App() {
     Boss: {color: "#00bfff", img: "https://i.pravatar.cc/150?img=11", personality: "Motivator"}
   })
   const [chats, setChats] = useState({
-    Prof: [{text: "Hey! Ready to test PinkChat? 💖", time: "10:30 AM", sender: "them"}],
+    Prof: [{text: "Hey! Ready to test Crypto-Prof? 💖", time: "10:30 AM", sender: "them"}],
     Coral: [{text: "Hi! This is Coral", time: "10:31 AM", sender: "them"}],
     Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}],
     Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}]
@@ -20,6 +20,9 @@ export default function App() {
 
   const bgColor = dark? "#0e0e0e" : "#ffffff"
   const textColor = dark? "#ffffff" : "#000"
+  const chatBg = dark? "#1a1a1a" : "#f1f1f1"
+  const aiMsgBg = dark? "#444" : "#e0e0e0"
+  const aiMsgText = dark? "#fff" : "#000" // FIX 1: Text readable in light mode
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -54,7 +57,7 @@ export default function App() {
   }
 
   return (
-    <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "20px", transition: "all 0.3s"}}>
+    <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "20px", transition: "all 0.3s", fontFamily: "Arial"}}>
       
       <h1 style={{color: "#ff69b4", fontSize: "32px", fontWeight: "bold", letterSpacing: "2px"}}>
         CRYPTO-PROF 💖
@@ -66,7 +69,7 @@ export default function App() {
       <div style={{margin: "10px 0", display: "flex", gap: "10px", flexWrap: "wrap"}}>
         {Object.keys(contacts).map(name => (
           <button key={name} onClick={() => setActiveContact(name)} 
-            style={{background: activeContact===name? contacts[name].color : "#333", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "20px", cursor: "pointer"}}>
+            style={{background: activeContact===name? contacts[name].color : "#333", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold"}}>
             {name}
           </button>
         ))}
@@ -78,11 +81,11 @@ export default function App() {
         </button>
       </div>
 
-      <div style={{background: dark? "#1a1a1a" : "#f1f1f1", padding: "15px", borderRadius: "10px", height: "400px", overflowY: "auto"}}>
+      <div style={{background: chatBg, padding: "15px", borderRadius: "10px", height: "400px", overflowY: "auto"}}>
         <h3>{activeContact} ({contacts[activeContact].personality})</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender==="me"? "right" : "left", margin: "8px 0"}}>
-            <span style={{background: m.sender==="me"? "#ff69b4" : "#444", padding: "8px 12px", borderRadius: "15px", display: "inline-block"}}>
+            <span style={{background: m.sender==="me"? "#ff69b4" : aiMsgBg, color: m.sender==="me"? "#fff" : aiMsgText, padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "70%"}}>
               {m.text}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
@@ -95,7 +98,7 @@ export default function App() {
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
           placeholder="Type a message..." 
           style={{flex: 1, padding: "10px", borderRadius: "20px", border: "none", outline: "none"}}/>
-        <button onClick={sendMessage} style={{marginLeft: "10px", background: "#ff69b4", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "20px"}}>
+        <button onClick={sendMessage} style={{marginLeft: "10px", background: "#ff69b4", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "20px", fontWeight: "bold"}}>
           Send
         </button>
       </div>
