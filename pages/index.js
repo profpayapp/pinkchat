@@ -4,6 +4,8 @@ export default function App() {
   const [dark, setDark] = useState(true)
   const [activeContact, setActiveContact] = useState("Prof")
   const [input, setInput] = useState("")
+  const fileInputRef = useRef(null)
+  
   const [contacts, setContacts] = useState({
     Prof: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1", personality: "Sweet"},
     Queen: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3", personality: "Chill"},
@@ -32,28 +34,36 @@ export default function App() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [chats, activeContact])
 
-  const sendMessage = () => {
-    if(!input.trim()) return
+  const sendMessage = (imageUrl = null) => {
+    if(!input.trim() &&!imageUrl) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    const newMsg = {text: input, time, sender: "me"}
+    const newMsg = {text: input, image: imageUrl, time, sender: "me"}
     setChats({...chats, [activeContact]: [...chats[activeContact], newMsg]})
     setInput("")
-    setTimeout(() => aiReply(input), 800)
+    setTimeout(() => aiReply(input, imageUrl), 800)
   }
 
-  const aiReply = (msg) => {
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]
+    if(file) {
+      const imageUrl = URL.createObjectURL(file)
+      sendMessage(imageUrl)
+    }
+  }
+
+  const aiReply = (msg, imageUrl) => {
     const personality = contacts[activeContact].personality
     let reply = "Tell me more"
     
-    if(personality === "Sweet") {
-      if(msg.includes("sad")) reply = "come here, I got you. You deserve better 💖"
-      else reply = "aww I love that! You're making me blush 🥰"
+    if(imageUrl) reply = "Nice picture! 😍 What is this?"
+    else {
+      if(personality === "Sweet") reply = "aww I love that! You're making me blush 🥰"
+      if(personality === "Chill") reply = "no stress babe, we dey chill 😎"
+      if(personality === "Wise") reply = "Interesting. Have you considered the bigger picture?"
+      if(personality === "Motivator") reply = "That's fire! Now let's go 10x it. What's the next move?"
+      if(personality === "Coder") reply = "That code is clean! But we can optimize it more 💻"
+      if(personality === "Gossip") reply = "Nooo tell me everything! I need all the tea ☕😂"
     }
-    if(personality === "Chill") reply = "no stress babe, we dey chill 😎"
-    if(personality === "Wise") reply = "Interesting. Have you considered the bigger picture?"
-    if(personality === "Motivator") reply = "That's fire! Now let's go 10x it. What's the next move?"
-    if(personality === "Coder") reply = "That code is clean! But we can optimize it more 💻"
-    if(personality === "Gossip") reply = "Nooo tell me everything! I need all the tea ☕😂"
     
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: "them"}]}))
@@ -93,6 +103,7 @@ export default function App() {
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender==="me"? "right" : "left", margin: "8px 0"}}>
             <span style={{background: m.sender==="me"? "#ff69b4" : aiMsgBg, color: m.sender==="me"? "#fff" : aiMsgText, padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "70%"}}>
+              {m.image && <img src={m.image} alt="upload" style={{maxWidth: "200px", borderRadius: "10px", marginBottom: "5px"}}/>}
               {m.text}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
@@ -101,11 +112,17 @@ export default function App() {
         <div ref={chatEndRef} />
       </div>
 
-      <div style={{display: "flex", marginTop: "10px"}}>
+      <div style={{display: "flex", marginTop: "10px", gap: "10px"}}>
+        {/* PICTURE BUTTON */}
+        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} style={{display: "none"}}/>
+        <button onClick={() => fileInputRef.current.click()} style={{background: "#555", color: "#fff", border: "none", padding: "10px", borderRadius: "20px"}}>
+          📎
+        </button>
+
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
           placeholder="Type a message..." 
           style={{flex: 1, padding: "10px", borderRadius: "20px", border: "none", outline: "none"}}/>
-        <button onClick={sendMessage} style={{marginLeft: "10px", background: "#ff69b4", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "20px", fontWeight: "bold"}}>
+        <button onClick={() => sendMessage()} style={{background: "#ff69b4", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "20px", fontWeight: "bold"}}>
           Send
         </button>
       </div>
