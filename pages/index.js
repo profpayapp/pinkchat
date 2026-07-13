@@ -1,54 +1,24 @@
-import { useState, useEffect } from "react"
-
-export default function Home() {
-  const [theme, setTheme] = useState("light")
-  const [activeContact, setActiveContact] = useState("Luna")
-  const [message, setMessage] = useState("")
-  const [chats, setChats] = useState({
-    Luna: [{text: "Hey! Ready to test PinkChat? 💖", time: "10:30 AM", sender: "them"}],
-    Coral: [{text: "Hi! This is Coral", time: "10:31 AM", sender: "them"}],
-    Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}]
-  })
-
-  useEffect(() => {
-    const savedChats = localStorage.getItem("pinkchat-chats")
-    const savedTheme = localStorage.getItem("pinkchat-theme")
-    if(savedChats) setChats(JSON.parse(savedChats))
-    if(savedTheme) setTheme(savedTheme)
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem("pinkchat-chats", JSON.stringify(chats))
-  }, [chats])
-
-  useEffect(() => {
-    localStorage.setItem("pinkchat-theme", theme)
-  }, [theme])
-
-  const bgColor = theme === "dark"? "#0f0f0f" : "#fff0f5"
-  const textColor = theme === "dark"? "#fff" : "#000"
-  const chatBg = theme === "dark"? "#1a1a1a" : "#ffe4ec"
-  const buttonBg = theme === "dark"? "#333" : "#fff"
-
-  // SMART REPLY FUNCTION
-  const getSmartReply = (contact, userMsg) => {
-    const msg = userMsg.toLowerCase()
-    
-    if(contact === "Luna") {
-      if(msg.includes("how") || msg.includes("you")) return "I'm doing great now that you're here 🥰"
-      if(msg.includes("love") || msg.includes("cute")) return "aww stop you're making me blush 💕"
-      if(msg.includes("sad")) return "come here, I got you. What's wrong? 💖"
-      return ["he", "tell me more", "you're so sweet", "aww 🥰"][Math.floor(Math.random()*4)]
-    }
-    
-    if(contact === "Coral") {
-      if(msg.includes("how")) return "yo I'm good bro, wassup 😎"
-      if(msg.includes("funny") || msg.includes("lol")) return "lmaooo dead 💀"
-      if(msg.includes("game") || msg.includes("play")) return "bet let's play! what we doing?"
-      return ["fr??", "say less", "bet", "yo that's crazy"][Math.floor(Math.random()*4)]
-    }
-    
-    if(contact === "Indigo") {
-      if(msg.includes("sad") || msg.includes("mind") || msg.includes("feel")) return "I hear you. I'm here and I'm listening 💜"
-      if(msg.includes("thanks")) return "Anytime. That's what I'm here for"
-      if(msg.includes("
+const getSmartReply = (contact, userMsg) => {
+  const msg = userMsg.toLowerCase()
+  
+  if(contact === "Luna") {
+    if(msg.includes("sad") || msg.includes("bad")) return "come here, I got you. You deserve better 💖"
+    if(msg.includes("nice") || msg.includes("good")) return "you're making me smile so hard rn 🥰"
+    if(msg.includes("time") || msg.includes("out")) return "with you? anytime. Let's go 💕"
+    return ["aww you're sweet", "tell me more", "you always know what to say", "he ok 💖"][Math.floor(Math.random()*4)]
+  }
+  
+  if(contact === "Coral") {
+    if(msg.includes("nice") || msg.includes("something")) return "you're lowkey the coolest person I know fr 😎"
+    if(msg.includes("know") || msg.includes("tell")) return "bet, did you know penguins propose with rocks?"
+    if(msg.includes("cool") || msg.includes("time")) return "no cap, this is peak vibes right now"
+    return ["bet", "fr??", "say less", "deadass 💀"][Math.floor(Math.random()*4)]
+  }
+  
+  if(contact === "Indigo") {
+    if(msg.includes("mind") || msg.includes("think")) return "What's on your mind? I'm all ears 💜"
+    if(msg.includes("today") || msg.includes("have")) return "For you? Peace, clarity, and someone who gets you"
+    if(msg.includes("nice") || msg.includes("good")) return "You bring good energy. Never forget that"
+    return ["I hear you", "That makes sense", "I'm here for you", "Take your time 💜"][Math.floor(Math.random()*4)]
+  }
+}
