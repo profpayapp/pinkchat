@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react" // NEW: useRef
 
 export default function Home() {
   const [theme, setTheme] = useState("light")
@@ -8,20 +8,31 @@ export default function Home() {
   const [editingName, setEditingName] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newContactName, setNewContactName] = useState("")
+  const messagesEndRef = useRef(null) // NEW: for auto scroll
   
   const [contacts, setContacts] = useState({
     Luna: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1"},
     Coral: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3"},
     Indigo: {color: "#6a5acd", img: "https://i.pravatar.cc/150?img=5"},
-    Boss: {color: "#00bfff", img: "https://i.pravatar.cc/150?img=11"} // NEW BOSS
+    Boss: {color: "#00bfff", img: "https://i.pravatar.cc/150?img=11"}
   })
 
   const [chats, setChats] = useState({
     Luna: [{text: "Hey! Ready to test PinkChat? 💖", time: "10:30 AM", sender: "them"}],
     Coral: [{text: "Hi! This is Coral", time: "10:31 AM", sender: "them"}],
     Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}],
-    Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}] // NEW
+    Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}]
   })
+
+  // NEW: AUTO SCROLL FUNCTION
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  // NEW: RUN WHEN CHATS CHANGE
+  useEffect(() => {
+    scrollToBottom()
+  }, [chats, activeContact])
 
   useEffect(() => {
     const savedChats = localStorage.getItem("pinkchat-chats")
@@ -43,18 +54,13 @@ export default function Home() {
 
   const getSmartReply = (contact, userMsg) => {
     const msg = userMsg.toLowerCase().replace(/["'.,!?]/g, "")
-    
-    // NEW BOSS PERSONALITY
     if(contact === "Boss") {
-      if(msg.includes("money") || msg.includes("business")) return "That's the mindset! Scale it, automate it, dominate it 💰 What's the next move?"
-      if(msg.includes("tired") || msg.includes("hard")) return "Champions don't quit. Rest 10min then get back to work. We eating soon 👑"
-      if(msg.includes("idea")) return "Pitch it to me. If it makes money, we do it. No excuses."
-      return ["Let's go", "Lock in", "Bigger vision", "Execute now 💼"][Math.floor(Math.random()*4)]
+      if(msg.includes("money")) return "That's the mindset! Scale it, automate it, dominate it 💰 What's the next move?"
+      return ["Let's go", "Lock in", "Execute now 💼"][Math.floor(Math.random()*3)]
     }
-    
     if(!["Luna","Coral","Indigo","Boss"].includes(contact)) {
       if(msg.includes("hi")) return `Hey! I'm ${contact}. Nice to meet you 😊`
-      return ["Got it", "Tell me more", "I understand"][Math.floor(Math.random()*3)]
+      return ["Got it", "Tell me more"][Math.floor(Math.random()*2)]
     }
     if(contact === "Luna") {
       if(msg.includes("sad")) return "come here, I got you. You deserve better 💖"
@@ -173,7 +179,8 @@ export default function Home() {
         <h2 style={{margin: 0}}>{activeContact}</h2>
       </div>
       
-      <div style={{background: chatBg, borderRadius: "10px", padding: "15px", margin: "10px 0", minHeight: "300px", overflowY: "auto"}}>
+      {/* UPDATED: ADDED overflowY AND REF */}
+      <div style={{background: chatBg, borderRadius: "10px", padding: "15px", margin: "10px 0", minHeight: "300px", maxHeight: "400px", overflowY: "auto"}}>
         {chats[activeContact].map((msg, i) => (
           <div key={i} style={{display: "flex", justifyContent: msg.sender === "me"? "flex-end" : "flex-start", margin: "8px 0"}}>
             <div style={{background: msg.sender === "me"? "#ff69b4" : "#fff", color: msg.sender === "me"? "#fff" : "#000", padding: "10px 15px", borderRadius: "18px", maxWidth: "70%"}}>
@@ -183,6 +190,9 @@ export default function Home() {
           </div>
         ))}
         {isTyping && <div>{activeContact} is typing...</div>}
+        
+        {/* NEW: INVISIBLE DIV TO SCROLL TO */}
+        <div ref={messagesEndRef} />
       </div>
 
       <input value={message} onChange={(e) => setMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendMessage()} placeholder="Type a message..." style={{padding: "10px", width: "70%", borderRadius: "20px", border: "1px solid #ddd"}} />
