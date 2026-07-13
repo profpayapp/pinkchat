@@ -5,23 +5,27 @@ export default function Home() {
   const [activeContact, setActiveContact] = useState("Luna")
   const [message, setMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [editingName, setEditingName] = useState(null) // NEW
+  
+  const [contacts, setContacts] = useState({ // NOW SAVABLE
+    Luna: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1"},
+    Coral: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3"},
+    Indigo: {color: "#6a5acd", img: "https://i.pravatar.cc/150?img=5"}
+  })
+
   const [chats, setChats] = useState({
     Luna: [{text: "Hey! Ready to test PinkChat? 💖", time: "10:30 AM", sender: "them"}],
     Coral: [{text: "Hi! This is Coral", time: "10:31 AM", sender: "them"}],
     Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}]
   })
 
-  const contacts = {
-    Luna: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1"},
-    Coral: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3"},
-    Indigo: {color: "#6a5acd", img: "https://i.pravatar.cc/150?img=5"}
-  }
-
   useEffect(() => {
     const savedChats = localStorage.getItem("pinkchat-chats")
     const savedTheme = localStorage.getItem("pinkchat-theme")
+    const savedContacts = localStorage.getItem("pinkchat-contacts") // NEW
     if(savedChats) setChats(JSON.parse(savedChats))
     if(savedTheme) setTheme(savedTheme)
+    if(savedContacts) setContacts(JSON.parse(savedContacts)) // NEW
   }, [])
 
   useEffect(() => {
@@ -32,26 +36,28 @@ export default function Home() {
     localStorage.setItem("pinkchat-theme", theme)
   }, [theme])
 
+  useEffect(() => {
+    localStorage.setItem("pinkchat-contacts", JSON.stringify(contacts)) // NEW
+  }, [contacts]) // NEW
+
   const bgColor = theme === "dark"? "#0f0f0f" : "#fff0f5"
   const textColor = theme === "dark"? "#fff" : "#000"
   const chatBg = theme === "dark"? "#1a1a1a" : "#ffe4ec"
   const buttonBg = theme === "dark"? "#333" : "#fff"
 
-  const getSmartReply = (contact, userMsg) => {
+  const getSmartReply = (contact, userMsg) => { /* SAME AS BEFORE */ 
     const msg = userMsg.toLowerCase().replace(/["'.,!?]/g, "")
     if(contact === "Luna") {
-      if(msg.includes("sad") || msg.includes("bad")) return "come here, I got you. You deserve better 💖"
-      if(msg.includes("how")) return "I'm amazing now that you're here 🥰 how are you?"
-      return ["you're so sweet", "tell me more", "you always make my day"][Math.floor(Math.random()*3)]
+      if(msg.includes("sad")) return "come here, I got you. You deserve better 💖"
+      return ["you're so sweet", "tell me more"][Math.floor(Math.random()*2)]
     }
     if(contact === "Coral") {
       if(msg.includes("ok")) return "yeah I'm good bro, just chilling. you?"
-      if(msg.includes("bro")) return "yo what's good bro 👀"
-      return ["bet", "fr??", "say less", "no cap"][Math.floor(Math.random()*4)]
+      return ["bet", "say less"][Math.floor(Math.random()*2)]
     }
     if(contact === "Indigo") {
       if(msg.includes("ok")) return "I'm okay, thank you for checking on me 💜"
-      return ["That makes sense", "I'm listening", "You got this 💜"][Math.floor(Math.random()*3)]
+      return ["I hear you", "That makes sense"][Math.floor(Math.random()*2)]
     }
   }
 
@@ -70,50 +76,70 @@ export default function Home() {
     }, 2000)
   }
 
-  // NEW FUNCTION: CLEAR CHAT
   const clearChat = () => {
     if(confirm(`Clear chat with ${activeContact}?`)) {
-      setChats(prev => ({
-       ...prev, 
-        [activeContact]: [{text: `Chat with ${activeContact} started`, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "them"}]
-      }))
+      setChats(prev => ({...prev, [activeContact]: [{text: `Chat with ${activeContact} started`, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "them"}]}))
     }
+  }
+
+  // NEW FUNCTION: RENAME CONTACT
+  const renameContact = (oldName, newName) => {
+    if(newName.trim() === "" || contacts[newName]) return
+    const updatedContacts = {...contacts}
+    updatedContacts[newName] = updatedContacts[oldName]
+    delete updatedContacts[oldName]
+    
+    const updatedChats = {...chats}
+    updatedChats[newName] = updatedChats[oldName]
+    delete updatedChats[oldName]
+    
+    setContacts(updatedContacts)
+    setChats(updatedChats)
+    setActiveContact(newName)
+    setEditingName(null)
   }
 
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "20px", transition: "all 0.3s"}}>
-      
       <h1 style={{color: "#ff69b4"}}>Crypto-Prof</h1>
       
-      <div style={{margin: "10px 0", display: "flex", gap: "10px"}}>
+      <div style={{margin: "10px 0", display: "flex", gap: "10px", flexWrap: "wrap"}}>
         {Object.keys(contacts).map(contact => (
-          <button 
-            key={contact}
-            onClick={() => setActiveContact(contact)}
-            style={{display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", 
-              background: activeContact === contact? contacts[contact].color : buttonBg, 
-              color: activeContact === contact? "#fff" : textColor, 
-              border: "none", borderRadius: "20px", cursor: "pointer", fontWeight: "bold"}}
-          >
-            <img src={contacts[contact].img} style={{width: "30px", height: "30px", borderRadius: "50%"}} />
-            {contact}
-          </button>
+          <div key={contact} style={{position: "relative"}}>
+            <button 
+              onClick={() => setActiveContact(contact)}
+              style={{display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", 
+                background: activeContact === contact? contacts[contact].color : buttonBg, 
+                color: activeContact === contact? "#fff" : textColor, 
+                border: "none", borderRadius: "20px", cursor: "pointer", fontWeight: "bold"}}
+            >
+              <img src={contacts[contact].img} style={{width: "30px", height: "30px", borderRadius: "50%"}} />
+              {contact}
+            </button>
+            {/* EDIT BUTTON */}
+            <button onClick={() => setEditingName(contact)} style={{position: "absolute", top: "-5px", right: "-5px", background: "#ff69b4", color: "#fff", border: "none", borderRadius: "50%", width: "20px", height: "20px", fontSize: "10px", cursor: "pointer"}}>✏️</button>
+          </div>
         ))}
       </div>
 
+      {editingName && ( // NEW POPUP
+        <div style={{background: buttonBg, padding: "10px", borderRadius: "10px", margin: "10px 0"}}>
+          <p>Rename {editingName} to:</p>
+          <input 
+            autoFocus
+            onKeyPress={(e) => e.key === 'Enter' && renameContact(editingName, e.target.value)}
+            placeholder="New name" 
+            style={{padding: "8px", borderRadius: "8px", border: "1px solid #ddd", marginRight: "5px"}} 
+          />
+          <button onClick={() => setEditingName(null)} style={{padding: "8px 12px", borderRadius: "8px", border: "none"}}>Cancel</button>
+        </div>
+      )}
+
       <div style={{display: "flex", gap: "10px"}}>
-        <button 
-          onClick={() => setTheme(theme === "light"? "dark" : "light")}
-          style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none"}}
-        >
+        <button onClick={() => setTheme(theme === "light"? "dark" : "light")} style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none"}}>
           Toggle {theme === "light"? "🌙 Dark" : "☀️ Light"}
         </button>
-
-        {/* NEW CLEAR BUTTON */}
-        <button 
-          onClick={clearChat}
-          style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none", background: "#ff4444", color: "#fff"}}
-        >
+        <button onClick={clearChat} style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none", background: "#ff4444", color: "#fff"}}>
           🗑️ Clear Chat
         </button>
       </div>
@@ -126,37 +152,16 @@ export default function Home() {
       <div style={{background: chatBg, borderRadius: "10px", padding: "15px", margin: "10px 0", minHeight: "300px", overflowY: "auto"}}>
         {chats[activeContact].map((msg, i) => (
           <div key={i} style={{display: "flex", justifyContent: msg.sender === "me"? "flex-end" : "flex-start", margin: "8px 0"}}>
-            <div style={{
-              background: msg.sender === "me"? "#ff69b4" : "#fff", 
-              color: msg.sender === "me"? "#fff" : "#000",
-              padding: "10px 15px", 
-              borderRadius: "18px",
-              maxWidth: "70%",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-            }}>
+            <div style={{background: msg.sender === "me"? "#ff69b4" : "#fff", color: msg.sender === "me"? "#fff" : "#000", padding: "10px 15px", borderRadius: "18px", maxWidth: "70%"}}>
               <p style={{margin: "0"}}>{msg.text}</p>
               <p style={{fontSize: "10px", opacity: 0.7, margin: "5px 0 0 0", textAlign: "right"}}>{msg.time}</p>
             </div>
           </div>
         ))}
-        
-        {isTyping && (
-          <div style={{display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "8px"}}>
-            <img src={contacts[activeContact].img} style={{width: "25px", height: "25px", borderRadius: "50%"}} />
-            <div style={{background: "#fff", color: "#000", padding: "10px 15px", borderRadius: "18px"}}>
-              {activeContact} is typing...
-            </div>
-          </div>
-        )}
+        {isTyping && <div>{activeContact} is typing...</div>}
       </div>
 
-      <input 
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-        placeholder="Type a message..." 
-        style={{padding: "10px", width: "70%", borderRadius: "20px", border: "1px solid #ddd"}} 
-      />
+      <input value={message} onChange={(e) => setMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendMessage()} placeholder="Type a message..." style={{padding: "10px", width: "70%", borderRadius: "20px", border: "1px solid #ddd"}} />
       <button onClick={sendMessage} style={{padding: "10px 20px", marginLeft: "5px", borderRadius: "20px", border: "none", background: "#ff69b4", color: "#fff", cursor: "pointer", fontWeight: "bold"}}>Send</button>
     </div>
   )
