@@ -11,7 +11,6 @@ export default function Home() {
     Indigo: [{text: "Indigo here! 👋", time: "10:32 AM", sender: "them"}]
   })
 
-  // CONTACT INFO WITH PROFILE PICS
   const contacts = {
     Luna: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1"},
     Coral: {color: "#ff7f50", img: "https://i.pravatar.cc/150?img=3"},
@@ -40,39 +39,28 @@ export default function Home() {
 
   const getSmartReply = (contact, userMsg) => {
     const msg = userMsg.toLowerCase().replace(/["'.,!?]/g, "")
-
     if(contact === "Luna") {
-      if(msg.includes("sad") || msg.includes("bad") || msg.includes("hurt")) return "come here, I got you. You deserve better 💖"
-      if(msg.includes("good") || msg.includes("notice")) return "I noticed YOU 😊 what's up?"
+      if(msg.includes("sad") || msg.includes("bad")) return "come here, I got you. You deserve better 💖"
       if(msg.includes("how")) return "I'm amazing now that you're here 🥰 how are you?"
-      if(msg.includes("ok") || msg.includes("fine")) return "I'm great! Missed talking to you 💕"
-      return ["you're so sweet", "tell me more", "you always make my day", "he ok 💖"][Math.floor(Math.random()*4)]
+      return ["you're so sweet", "tell me more", "you always make my day"][Math.floor(Math.random()*3)]
     }
-
     if(contact === "Coral") {
-      if(msg.includes("ok") || msg.includes("sure") || msg.includes("fine")) return "yeah I'm good bro, just chilling. you?"
-      if(msg.includes("how")) return "I'm chillin man, you good?"
-      if(msg.includes("bro") || msg.includes("call")) return "yo what's good bro 👀"
-      if(msg.includes("bored") || msg.includes("do")) return "let's cause some trouble then 😈 what we doing?"
-      return ["bet", "fr??", "say less", "no cap", "deadass 💀"][Math.floor(Math.random()*4)]
+      if(msg.includes("ok")) return "yeah I'm good bro, just chilling. you?"
+      if(msg.includes("bro")) return "yo what's good bro 👀"
+      return ["bet", "fr??", "say less", "no cap"][Math.floor(Math.random()*4)]
     }
-
     if(contact === "Indigo") {
-      if(msg.includes("mind") || msg.includes("think") || msg.includes("feel")) return "I hear you. What's really going on?"
-      if(msg.includes("ok") || msg.includes("sure") || msg.includes("fine")) return "I'm okay, thank you for checking on me 💜"
-      if(msg.includes("today") || msg.includes("have")) return "For you today? Clarity, peace, and strength"
-      return ["That makes sense", "I'm listening", "Take your time", "You got this 💜"][Math.floor(Math.random()*4)]
+      if(msg.includes("ok")) return "I'm okay, thank you for checking on me 💜"
+      return ["That makes sense", "I'm listening", "You got this 💜"][Math.floor(Math.random()*3)]
     }
   }
 
   const sendMessage = () => {
     if(message.trim() === "") return
     const newMsg = {text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "me"}
-
     const updatedChats = {...chats, [activeContact]: [...chats[activeContact], newMsg]}
     setChats(updatedChats)
     setMessage("")
-
     setIsTyping(true)
     setTimeout(() => {
       setIsTyping(false)
@@ -82,12 +70,21 @@ export default function Home() {
     }, 2000)
   }
 
+  // NEW FUNCTION: CLEAR CHAT
+  const clearChat = () => {
+    if(confirm(`Clear chat with ${activeContact}?`)) {
+      setChats(prev => ({
+       ...prev, 
+        [activeContact]: [{text: `Chat with ${activeContact} started`, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), sender: "them"}]
+      }))
+    }
+  }
+
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "20px", transition: "all 0.3s"}}>
       
       <h1 style={{color: "#ff69b4"}}>Crypto-Prof</h1>
       
-      {/* CONTACT BUTTONS WITH PICS */}
       <div style={{margin: "10px 0", display: "flex", gap: "10px"}}>
         {Object.keys(contacts).map(contact => (
           <button 
@@ -104,14 +101,23 @@ export default function Home() {
         ))}
       </div>
 
-      <button 
-        onClick={() => setTheme(theme === "light"? "dark" : "light")}
-        style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none"}}
-      >
-        Toggle {theme === "light"? "🌙 Dark" : "☀️ Light"}
-      </button>
+      <div style={{display: "flex", gap: "10px"}}>
+        <button 
+          onClick={() => setTheme(theme === "light"? "dark" : "light")}
+          style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none"}}
+        >
+          Toggle {theme === "light"? "🌙 Dark" : "☀️ Light"}
+        </button>
 
-      {/* CHAT HEADER WITH PIC */}
+        {/* NEW CLEAR BUTTON */}
+        <button 
+          onClick={clearChat}
+          style={{padding: "10px 20px", borderRadius: "8px", cursor: "pointer", margin: "10px 0", border: "none", background: "#ff4444", color: "#fff"}}
+        >
+          🗑️ Clear Chat
+        </button>
+      </div>
+
       <div style={{display: "flex", alignItems: "center", gap: "10px", margin: "10px 0"}}>
         <img src={contacts[activeContact].img} style={{width: "40px", height: "40px", borderRadius: "50%"}} />
         <h2 style={{margin: 0}}>{activeContact}</h2>
