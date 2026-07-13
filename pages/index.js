@@ -12,7 +12,6 @@ export default function App() {
   const mediaRecorderRef = useRef(null)
   const mediaStreamRef = useRef(null)
   const chunksRef = useRef([])
-  const holdTimerRef = useRef(null)
   
   const [contacts] = useState({
     Prof: {color: "#ff69b4", img: "https://i.pravatar.cc/150?img=1", personality: "Sweet"},
@@ -29,25 +28,21 @@ export default function App() {
   
   const chatEndRef = useRef(null)
 
-  // LOAD CHATS FROM PHONE STORAGE
+  // LOAD CHATS
   useEffect(() => {
     const saved = localStorage.getItem("crypto-prof-chats")
-    if(saved) {
-      setChats(JSON.parse(saved))
-    } else {
-      // First time welcome messages
-      setChats({
-        Prof: [{text: "Hey! Ready to test Crypto-Prof? 💖", time: "10:30 AM", sender: "them"}],
-        Queen: [{text: "Hey babe, what's the gist? 😘", time: "10:31 AM", sender: "them"}],
-        Indigo: [{text: "Indigo here! Let's think deep 👋", time: "10:32 AM", sender: "them"}],
-        Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}],
-        Tech: [{text: "Code dey run? Need any bug fixed? 💻", time: "10:34 AM", sender: "them"}],
-        Gist: [{text: "Omo you hear the latest gist? 😂", time: "10:35 AM", sender: "them"}]
-      })
-    }
+    if(saved) setChats(JSON.parse(saved))
+    else setChats({
+      Prof: [{text: "Hey! Ready to test Crypto-Prof? 💖", time: "10:30 AM", sender: "them"}],
+      Queen: [{text: "Hey babe, what's the gist? 😘", time: "10:31 AM", sender: "them"}],
+      Indigo: [{text: "Indigo here! Let's think deep 👋", time: "10:32 AM", sender: "them"}],
+      Boss: [{text: "Let's make money today. What we building? 💼", time: "10:33 AM", sender: "them"}],
+      Tech: [{text: "Code dey run? Need any bug fixed? 💻", time: "10:34 AM", sender: "them"}],
+      Gist: [{text: "Omo you hear the latest gist? 😂", time: "10:35 AM", sender: "them"}]
+    })
   }, [])
 
-  // SAVE CHATS TO PHONE STORAGE EVERY TIME THEY CHANGE
+  // SAVE CHATS
   useEffect(() => {
     localStorage.setItem("crypto-prof-chats", JSON.stringify(chats))
   }, [chats])
@@ -81,7 +76,7 @@ export default function App() {
 
   const handleVideoUpload = (e) => {
     const file = e.target.files[0]
-    if(file) {
+    if(file && file.type.startsWith('video')) { // FORCE VIDEO TYPE
       const videoUrl = URL.createObjectURL(file)
       sendMessage(null, null, videoUrl)
     }
@@ -94,17 +89,14 @@ export default function App() {
     }
   }
 
-  const startHold = (type) => {
-    holdTimerRef.current = setTimeout(() => {
+  // NEW: TAP TO START/STOP RECORDING
+  const toggleRecording = async (type) => {
+    if(recording && recordingType === type) {
+      stopRecording()
+    } else {
+      if(recording) stopRecording() // stop previous first
       startRecording(type)
-    }, 300)
-  }
-  const cancelHold = () => {
-    clearTimeout(holdTimerRef.current)
-  }
-  const endHold = () => {
-    cancelHold()
-    if(recording) stopRecording()
+    }
   }
 
   const startRecording = async (type) => {
@@ -126,7 +118,7 @@ export default function App() {
       setRecording(true)
       setRecordingType(type)
     } catch(err) {
-      alert("Please allow camera/microphone permission")
+      alert("Please allow camera/microphone permission in browser settings")
     }
   }
 
@@ -233,28 +225,23 @@ export default function App() {
             Doc
           </button>
 
+          {/* FIXED: TAP TO RECORD */}
           <button 
-            onTouchStart={() => startHold('audio')}
-            onTouchEnd={endHold}
-            onMouseDown={() => startHold('audio')}
-            onMouseUp={endHold}
+            onClick={() => toggleRecording('audio')}
             style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
             <div style={{background: recording && recordingType==='audio'? "red" : "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>
               {recording && recordingType==='audio'? "🔴" : "🎤"}
             </div>
-            Voice
+            {recording && recordingType==='audio'? "Stop" : "Voice"}
           </button>
 
           <button 
-            onTouchStart={() => startHold('video')}
-            onTouchEnd={endHold}
-            onMouseDown={() => startHold('video')}
-            onMouseUp={endHold}
+            onClick={() => toggleRecording('video')}
             style={{background: "none", border: "none", color: textColor, display: "flex", flexDirection: "column", alignItems: "center", fontSize: "10px"}}>
             <div style={{background: recording && recordingType==='video'? "red" : "#555", padding: "10px", borderRadius: "50%", marginBottom: "3px"}}>
               {recording && recordingType==='video'? "🔴" : "📹"}
             </div>
-            Live
+            {recording && recordingType==='video'? "Stop" : "Live"}
           </button>
         </div>
       </div>
