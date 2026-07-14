@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react"
 export default function App() {
   const [dark, setDark] = useState(true)
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState({name: "", bio: "", pic: null}) // NEW PROFILE
+  const [profile, setProfile] = useState({name: "", bio: ""}) // ADDED BIO
   const [activeContact, setActiveContact] = useState("Prof")
   const [input, setInput] = useState("")
   const [recording, setRecording] = useState(false)
@@ -28,21 +28,25 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(false)
   const chatEndRef = useRef(null)
 
+  // USE OLD STORAGE SO YOUR OLD CHATS COME BACK
   useEffect(() => {
-    const savedUser = localStorage.getItem("pinkchat-profile")
-    const savedChats = localStorage.getItem("pinkchat-chats")
-    const savedPremium = localStorage.getItem("pinkchat-premium")
-    if(savedUser) {
-      setProfile(JSON.parse(savedUser))
-      setUser(JSON.parse(savedUser).name)
-    }
+    const savedUser = localStorage.getItem("crypto-prof-user")
+    const savedChats = localStorage.getItem("crypto-prof-chats")
+    const savedPremium = localStorage.getItem("crypto-prof-premium")
+    const savedProfile = localStorage.getItem("crypto-prof-profile")
+    
+    if(savedUser) setUser(savedUser)
+    if(savedProfile) setProfile(JSON.parse(savedProfile))
     if(savedChats) setChats(JSON.parse(savedChats))
     if(savedPremium) setIsPremium(JSON.parse(savedPremium))
   }, [])
 
   useEffect(() => {
-    if(user) localStorage.setItem("pinkchat-chats", JSON.stringify(chats))
-  }, [chats, user])
+    if(user) {
+      localStorage.setItem("crypto-prof-chats", JSON.stringify(chats))
+      localStorage.setItem("crypto-prof-profile", JSON.stringify(profile))
+    }
+  }, [chats, user, profile])
 
   useEffect(() => {chatEndRef.current?.scrollIntoView({ behavior: "smooth" })}, [chats, activeContact])
 
@@ -53,12 +57,13 @@ export default function App() {
   const handleLogin = () => {
     if(profile.name.trim()) {
       setUser(profile.name)
-      localStorage.setItem("pinkchat-profile", JSON.stringify(profile))
+      localStorage.setItem("crypto-prof-user", profile.name)
+      localStorage.setItem("crypto-prof-profile", JSON.stringify(profile))
     }
   }
   const handleLogout = () => {
     setUser(null)
-    localStorage.removeItem("pinkchat-profile")
+    localStorage.removeItem("crypto-prof-user")
   }
 
   const sendMessage = async (imageUrl = null, audioUrl = null, videoUrl = null, docName = null) => {
@@ -134,11 +139,11 @@ export default function App() {
     return (
       <div style={{background: bgColor, color: textColor, minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "20px"}}>
         
-        {/* STYLISH BRAND HEADER */}
+        {/* STYLISH PINKCHAT BRAND */}
         <h1 style={{
           fontSize: "42px", 
           fontWeight: "900",
-          background: "linear-gradient(45deg, #ff69b4, #ffa500, #ff69b4)",
+          background: "linear-gradient(45deg, #ff69b4, #ffa500)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           textShadow: "0 0 20px #ff69b4",
@@ -148,7 +153,6 @@ export default function App() {
         </h1>
         <p style={{fontSize: "12px", color: "#aaa", marginBottom: "20px"}}>AUTHOR BY CRYPTO-PROF</p>
         
-        {/* REAL PROFILE REGISTRATION */}
         <input 
           value={profile.name} 
           onChange={e => setProfile({...profile, name: e.target.value})} 
@@ -191,7 +195,7 @@ export default function App() {
         textAlign: "center"
       }}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
-        <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | Hi {profile.name} 👋</p>
+        <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | {profile.bio}</p>
       </div>
 
       <div style={{margin: "8px 0", display: "flex", gap: "6px", flexWrap: "wrap"}}>
