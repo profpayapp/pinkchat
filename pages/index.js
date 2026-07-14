@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react"
 export default function App() {
   const [dark, setDark] = useState(true)
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState({name: "", bio: ""}) // ADDED BIO
+  const [profile, setProfile] = useState({name: "", bio: ""})
   const [activeContact, setActiveContact] = useState("Prof")
   const [input, setInput] = useState("")
   const [recording, setRecording] = useState(false)
@@ -28,7 +28,7 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(false)
   const chatEndRef = useRef(null)
 
-  // USE OLD STORAGE SO YOUR OLD CHATS COME BACK
+  // LOAD OLD DATA
   useEffect(() => {
     const savedUser = localStorage.getItem("crypto-prof-user")
     const savedChats = localStorage.getItem("crypto-prof-chats")
@@ -41,6 +41,7 @@ export default function App() {
     if(savedPremium) setIsPremium(JSON.parse(savedPremium))
   }, [])
 
+  // SAVE DATA
   useEffect(() => {
     if(user) {
       localStorage.setItem("crypto-prof-chats", JSON.stringify(chats))
@@ -48,7 +49,17 @@ export default function App() {
     }
   }, [chats, user, profile])
 
+  // AUTO SCROLL
   useEffect(() => {chatEndRef.current?.scrollIntoView({ behavior: "smooth" })}, [chats, activeContact])
+
+  // CLEANUP CAMERA WHEN APP CLOSES - NEW FIX
+  useEffect(() => {
+    return () => {
+      if(mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [])
 
   const bgColor = dark? "#0e0e0e" : "#ffffff"
   const textColor = dark? "#ffffff" : "#000"
@@ -101,13 +112,18 @@ export default function App() {
       startRecording(type)
     }
   }
+
+  // FIXED: KEEP CAMERA ON
   const startCameraPreview = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}, audio: true})
-      mediaStreamRef.current = stream
-      if(videoRef.current) videoRef.current.srcObject = stream
+      if(!mediaStreamRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "user"}, audio: true})
+        mediaStreamRef.current = stream
+      }
+      if(videoRef.current) videoRef.current.srcObject = mediaStreamRef.current
     } catch(err) {alert("Camera Error: " + err.message); setShowCamera(false)}
   }
+
   const startRecording = async (type) => {
     try {
       if(!mediaStreamRef.current) mediaStreamRef.current = await navigator.mediaDevices.getUserMedia(type === 'video'? { audio: true, video: true } : { audio: true })
@@ -119,27 +135,26 @@ export default function App() {
         const url = URL.createObjectURL(blob)
         if(type === 'video') sendMessage(null, null, url)
         else sendMessage(null, url)
-        mediaStreamRef.current.getTracks().forEach(track => track.stop())
-        mediaStreamRef.current = null
-        setShowCamera(false)
+        // DON'T STOP STREAM HERE - KEEP IT FOR LIVE
       }
       mediaRecorderRef.current.start()
       setRecording(true)
       setRecordingType(type)
     } catch(err) {alert("Recording Error: " + err.message)}
   }
+
+  // FIXED: DON'T KILL CAMERA
   const stopRecording = () => {
     if(mediaRecorderRef.current) mediaRecorderRef.current.stop()
     setRecording(false)
     setRecordingType(null)
   }
+
   const clearChat = () => {setChats({...chats, [activeContact]: []})}
 
   if(!user) {
     return (
       <div style={{background: bgColor, color: textColor, minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "20px"}}>
-        
-        {/* STYLISH PINKCHAT BRAND */}
         <h1 style={{
           fontSize: "42px", 
           fontWeight: "900",
@@ -185,8 +200,6 @@ export default function App() {
 
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
-      
-      {/* STYLISH TOP BAR */}
       <div style={{
         background: "linear-gradient(90deg, #ff69b4, #ffa500)",
         padding: "10px",
@@ -212,6 +225,7 @@ export default function App() {
       {showCamera && (
         <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px"}}>
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "10px"}}/>
+          <div style={{position: "absolute", top: "10px", left: "10px", background: "red", color: "#fff", padding: "5px 10px", borderRadius: "15px", fontSize: "12px"}}>🔴 LIVE</div>
         </div>
       )}
 
