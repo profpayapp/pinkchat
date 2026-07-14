@@ -4,7 +4,7 @@ export default function App() {
   const [dark, setDark] = useState(true)
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState({name: "", bio: ""})
-  const [activeContact, setActiveContact] = useState("Group") // NEW: GROUP
+  const [activeContact, setActiveContact] = useState("Group")
   const [input, setInput] = useState("")
   const [recording, setRecording] = useState(false)
   const [recordingType, setRecordingType] = useState(null)
@@ -18,13 +18,13 @@ export default function App() {
   const chunksRef = useRef([])
   
   const [contacts] = useState({
-    Group: "#ff1493", // NEW PINK GROUP COLOR
+    Group: "#ff1493",
     Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
     Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
   })
   
   const [chats, setChats] = useState({
-    Group: [], // NEW GROUP CHAT
+    Group: [],
     Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
   const [isPremium, setIsPremium] = useState(false)
@@ -76,27 +76,25 @@ export default function App() {
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const newMsg = {text: input, image: imageUrl, audio: audioUrl, video: videoUrl, doc: docName, time, sender: user}
     
-    // IF IN GROUP, SEND TO GROUP
     setChats({...chats, [activeContact]: [...chats[activeContact], newMsg]})
     setInput("")
     
     setTimeout(() => {
       if(activeContact === "Group") {
-        groupReply(input, imageUrl, audioUrl, videoUrl, docName) // ALL 6 REPLY
+        groupReply(input, imageUrl, audioUrl, videoUrl, docName)
       } else {
-        aiReply(activeContact, input, imageUrl, audioUrl, videoUrl, docName) // 1 AI REPLY
+        aiReply(activeContact, input, imageUrl, audioUrl, videoUrl, docName)
       }
     }, 1000)
   }
 
-  // NEW: ALL 6 AIs REPLY IN GROUP
   const groupReply = (msg, imageUrl, audioUrl, videoUrl, docName) => {
     const aiNames = ["Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"]
     aiNames.forEach((name, index) => {
       setTimeout(() => {
-        let reply = ""
-        if(name === "Prof") reply = "As Prof: Great point! Let me break this down 💡"
-        if(name === "Queen") reply = "Queen here: I agree with Prof, and also... 👑"
+        let reply = `${name}: Got it! 💖`
+        if(name === "Prof") reply = "Prof: Great point! Let me break this down 💡"
+        if(name === "Queen") reply = "Queen: I agree, and also... 👑"
         if(name === "Indigo") reply = "Indigo: From tech angle, this is smart 🔧"
         if(name === "Boss") reply = "Boss: Let's make money from this! 💰"
         if(name === "Tech") reply = "Tech: I can code that for you 💻"
@@ -109,14 +107,14 @@ export default function App() {
         
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         setChats(prev => ({...prev, Group: [...prev.Group, {text: reply, time, sender: name}]}))
-      }, index * 800) // Each AI replies 0.8s after the last
+      }, index * 800)
     })
   }
 
   const aiReply = (name, msg, imageUrl, audioUrl, videoUrl, docName) => {
     let reply = "I'm here for you 💖"
     if(docName) reply = `Got your document: ${docName} 📄`
-    if(videoUrl) reply = "Omo this video is fire! 🔥 What are we watching?"
+    if(videoUrl) reply = "Omo this video is fire! 🔥"
     if(audioUrl) reply = "I heard your voice note! 🔊"
     if(imageUrl) reply = "Nice picture! 😍"
     
@@ -244,9 +242,9 @@ export default function App() {
       </div>
 
       {showCamera && (
-        <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px", position: "relative"}}>
+        <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px"}}>
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "10px"}}/>
-          <div style={{position: "absolute", top: "10px", left: "10px", background: "red", color: "#fff", padding: "5px 10px", borderRadius: "15px", fontSize: "12px"}}>🔴 LIVE</div>
+          <div style={{background: "red", color: "#fff", padding: "5px", borderRadius: "10px", fontSize: "12px", textAlign: "center"}}>🔴 LIVE</div>
         </div>
       )}
 
