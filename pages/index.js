@@ -12,7 +12,8 @@ export default function App() {
   const [recording, setRecording] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [liveStream, setLiveStream] = useState(null)
-  const [typing, setTyping] = useState("") // NEW
+  const [typing, setTyping] = useState("")
+  const [viewerCount, setViewerCount] = useState(0) // NEW
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
@@ -85,7 +86,7 @@ export default function App() {
 
     setTimeout(() => {
       if(activeContact === "Group") {
-        groupReplyWithTyping() // CHANGED
+        groupReplyWithTyping()
       } else {
         aiReply(activeContact)
       }
@@ -139,24 +140,27 @@ export default function App() {
     }, 1000)
   }
 
+  // UPDATED: LIVE WITH VIEWER COUNT
   const toggleLive = async () => {
     if(!isLive) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         setLiveStream(stream)
         setIsLive(true)
+        setViewerCount(Math.floor(Math.random() * 10) + 3) // 3-12 viewers
 
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        const msg = {text: `📹 ${user} is LIVE 🔴`, time, sender: user}
+        const msg = {text: `📹 ${user} is LIVE 🔴 • ${viewerCount} viewers`, time, sender: user}
         setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
 
+        // AIs welcome viewers
         const liveComments = [
-          "Prof: Welcome to the live! 💡",
-          "Queen: Hi everyone! 👑",
-          "Indigo: This is fire 🔧",
-          "Boss: Let's go viral! 💰",
-          "Tech: Stream quality is good 💻",
-          "Gist: Omo I don join 😂"
+          `Prof: Welcome ${viewerCount} people watching! 💡`,
+          `Queen: Hi everyone! Thanks for joining 👑`,
+          `Indigo: Drop a comment if you can hear me 🔧`,
+          `Boss: Let's make this live viral! 💰`,
+          `Tech: Stream is stable 💻`,
+          `Gist: Omo the live is sweet o 😂`
         ]
 
         liveComments.forEach((comment, index) => {
@@ -166,6 +170,10 @@ export default function App() {
           }, (index + 1) * 1500)
         })
 
+        // Simulate viewers joining
+        setTimeout(() => setViewerCount(prev => prev + 2), 5000)
+        setTimeout(() => setViewerCount(prev => prev + 3), 10000)
+
       } catch(err) {
         alert("Camera access denied. Please allow camera permission.")
       }
@@ -173,8 +181,9 @@ export default function App() {
       liveStream?.getTracks().forEach(track => track.stop())
       setLiveStream(null)
       setIsLive(false)
+      setViewerCount(0)
       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `📹 Live ended`, time, sender: user}
+      const msg = {text: `📹 Live ended • ${viewerCount} total viewers`, time, sender: user}
       setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
     }
   }
@@ -222,7 +231,6 @@ export default function App() {
     }
   }
 
-  // NEW: GROUP REPLY WITH TYPING ANIMATION
   const groupReplyWithTyping = () => {
     const aiList = [
       {name: "Prof", text: "Prof: Great point! Let me break this down 💡"},
@@ -235,15 +243,15 @@ export default function App() {
 
     aiList.forEach((ai, index) => {
       setTimeout(() => {
-        setTyping(`${ai.name} is typing...`) // SHOW TYPING
+        setTyping(`${ai.name} is typing...`)
 
         setTimeout(() => {
           const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
           setChats(prev => ({...prev, Group: [...prev.Group, {text: ai.text, time, sender: ai.name}]}))
-          setTyping("") // HIDE TYPING
-        }, 1200) // 1.2s typing delay
+          setTyping("")
+        }, 1200)
 
-      }, index * 2000) // 2s between each AI
+      }, index * 2000)
     })
   }
 
@@ -310,7 +318,9 @@ export default function App() {
       {isLive && (
         <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px", padding: "5px"}}>
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "8px", maxHeight: "250px"}} />
-          <div style={{color: "red", textAlign: "center", fontWeight: "bold", fontSize: "12px"}}>🔴 LIVE</div>
+          <div style={{color: "red", textAlign: "center", fontWeight: "bold", fontSize: "14px"}}>
+            🔴 LIVE • {viewerCount} viewers 👁️
+          </div>
         </div>
       )}
 
@@ -327,7 +337,7 @@ export default function App() {
       </div>
 
       <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "50vh", overflowY: "auto"}}>
-        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"} {isLive && "🔴 LIVE"}</h3>
+        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"} {isLive && `🔴 LIVE • ${viewerCount} viewers`}</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
             <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
@@ -349,7 +359,6 @@ export default function App() {
           </div>
         ))}
 
-        {/* TYPING ANIMATION */}
         {typing && (
           <div style={{fontSize: "11px", color: "#ff69b4", fontStyle: "italic", margin: "5px 0"}}>
             {typing} <span className="dots">...</span>
