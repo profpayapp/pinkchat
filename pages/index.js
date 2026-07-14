@@ -9,11 +9,11 @@ export default function App() {
   const [chats, setChats] = useState({
     Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
-  const [recording, setRecording] = useState(false) // NEW
+  const [recording, setRecording] = useState(false)
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
-  const mediaRecorderRef = useRef(null) // NEW
-  const audioChunksRef = useRef([]) // NEW
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
 
   const contactColors = {
     Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
@@ -89,7 +89,7 @@ export default function App() {
     }, 1000)
   }
 
-  // NEW: VOICE RECORDING
+  // FIXED: SAVE REAL AUDIO + BIG BUTTON
   const startRecording = async () => {
     setRecording(true)
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -101,8 +101,10 @@ export default function App() {
     }
     
     mediaRecorderRef.current.onstop = () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+      const audioUrl = URL.createObjectURL(audioBlob) // SAVE REAL AUDIO
       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `🎤 Voice Note`, time, sender: user}
+      const msg = {text: `🎤 Voice Note`, audio: audioUrl, time, sender: user}
       setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
       
       setTimeout(() => {
@@ -119,6 +121,10 @@ export default function App() {
   const stopRecording = () => {
     setRecording(false)
     mediaRecorderRef.current?.stop()
+  }
+
+  const playAudio = (audioUrl) => {
+    new Audio(audioUrl).play() // PLAY ON TAP
   }
 
   const groupReply = () => {
@@ -210,8 +216,11 @@ export default function App() {
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
             <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
-            <span style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%"}}>
-              {m.text}
+            <span 
+              onClick={() => m.audio && playAudio(m.audio)} // PLAY ON CLICK
+              style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.audio? "pointer" : "default"}}
+            >
+              {m.text} {m.audio && "▶️ Tap to play"}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
           </div>
@@ -229,14 +238,25 @@ export default function App() {
         <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎥 Video</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
+        
+        {/* BIGGER VOICE BUTTON */}
         <button 
           onMouseDown={startRecording} 
           onMouseUp={stopRecording}
           onTouchStart={startRecording}
           onTouchEnd={stopRecording}
-          style={{background: recording? "red" : "none", border: "none", color: textColor, fontSize: "10px"}}>
-          🎤 {recording? "Recording..." : "Voice"}
+          style={{
+            background: recording? "red" : "linear-gradient(90deg, #ff69b4, #ffa500)", 
+            border: "none", 
+            color: "#fff", 
+            fontSize: "14px",
+            padding: "12px 18px",
+            borderRadius: "25px",
+            fontWeight: "bold"
+          }}>
+          🎤 {recording? "Recording..." : "Hold to Talk"}
         </button>
+        
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📹 Live</button>
       </div>
     </div>
