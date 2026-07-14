@@ -12,6 +12,7 @@ export default function App() {
   const [recording, setRecording] = useState(false)
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
+  const videoInputRef = useRef(null) // NEW
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const lastAudioRef = useRef(null)
@@ -81,6 +82,7 @@ export default function App() {
   }
 
   const handleGallery = () => {fileInputRef.current?.click()}
+  const handleVideo = () => {videoInputRef.current?.click()} // NEW
 
   const handleFileSend = (e) => {
     const file = e.target.files[0]
@@ -96,10 +98,23 @@ export default function App() {
     }, 1000)
   }
 
-  // CHANGED: TAP TO START/STOP
+  // NEW: VIDEO SEND
+  const handleVideoSend = (e) => {
+    const file = e.target.files[0]
+    if(!file) return
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    const msg = {text: `🎥 Sent Video: ${file.name}`, time, sender: user}
+    
+    setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
+    
+    setTimeout(() => {
+      const reply = activeContact==="Group"? "Group: Nice video! 👥" : "I got your video! 🎥"
+      setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
+    }, 1000)
+  }
+
   const toggleRecording = async () => {
     if(!recording) {
-      // START RECORDING
       playBeep()
       setRecording(true)
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -130,7 +145,6 @@ export default function App() {
       
       mediaRecorderRef.current.start()
     } else {
-      // STOP RECORDING
       setRecording(false)
       mediaRecorderRef.current?.stop()
     }
@@ -208,6 +222,7 @@ export default function App() {
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
       <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} />
+      <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSend} style={{display: "none"}} /> {/* NEW */}
       
       <div style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", padding: "10px", borderRadius: "15px", marginBottom: "10px", textAlign: "center"}}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
@@ -251,10 +266,9 @@ export default function App() {
 
       <div style={{display: "flex", gap: "10px", justifyContent: "space-around", marginTop: "10px"}}>
         <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
-        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎥 Video</button>
+        <button onClick={handleVideo} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎥 Video</button> {/* ACTIVE NOW */}
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
         
-        {/* TAP TO START/STOP */}
         <button 
           onClick={toggleRecording}
           style={{
