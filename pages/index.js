@@ -11,7 +11,7 @@ export default function App() {
   const [recordingType, setRecordingType] = useState(null)
   const [typing, setTyping] = useState(null)
   const [showCamera, setShowCamera] = useState(false)
-  const [generatingImage, setGeneratingImage] = useState(false) // NEW
+  const [generatingImage, setGeneratingImage] = useState(false)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
   const docInputRef = useRef(null)
@@ -36,14 +36,28 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(false)
   const chatEndRef = useRef(null)
 
+  // FIXED: SAFE LOAD WITH TRY/CATCH
   useEffect(() => {
-    const savedUser = localStorage.getItem("pinkchat-user") || localStorage.getItem("crypto-prof-user")
-    const savedChats = localStorage.getItem("pinkchat-chats") || localStorage.getItem("crypto-prof-chats")
-    const savedPremium = localStorage.getItem("pinkchat-premium") || localStorage.getItem("crypto-prof-premium")
-    
-    if(savedUser) {setUser(savedUser); localStorage.setItem("pinkchat-user", savedUser)}
-    if(savedChats) {setChats(JSON.parse(savedChats)); localStorage.setItem("pinkchat-chats", savedChats)}
-    if(savedPremium) {setIsPremium(JSON.parse(savedPremium)); localStorage.setItem("pinkchat-premium", savedPremium)}
+    try {
+      const savedUser = localStorage.getItem("pinkchat-user") || localStorage.getItem("crypto-prof-user")
+      const savedChats = localStorage.getItem("pinkchat-chats") || localStorage.getItem("crypto-prof-chats")
+      const savedPremium = localStorage.getItem("pinkchat-premium") || localStorage.getItem("crypto-prof-premium")
+      
+      if(savedUser) {setUser(savedUser); localStorage.setItem("pinkchat-user", savedUser)}
+      
+      if(savedChats) {
+        const parsed = JSON.parse(savedChats)
+        // Make sure Group exists
+        if(!parsed.Group) parsed.Group = []
+        setChats(parsed)
+        localStorage.setItem("pinkchat-chats", JSON.stringify(parsed))
+      }
+      
+      if(savedPremium) {setIsPremium(JSON.parse(savedPremium)); localStorage.setItem("pinkchat-premium", savedPremium)}
+    } catch(err) {
+      console.log("Error loading chats, starting fresh")
+      localStorage.removeItem("pinkchat-chats") // clear corrupted data
+    }
   }, [])
 
   useEffect(() => {if(user) localStorage.setItem("pinkchat-chats", JSON.stringify(chats))}, [chats, user])
@@ -56,7 +70,7 @@ export default function App() {
   const handleLogin = () => {if(username.trim()) {setUser(username); localStorage.setItem("pinkchat-user", username)}}
   const handleLogout = () => {setUser(null); localStorage.removeItem("pinkchat-user")}
   const handleUpgrade = () => {
-    alert("Upgrade to PINKCHAT PREMIUM $9.99/mo\nYou get:\n1. Unlimited AI messages\n2. Unlimited AI Image Gen\n3. Export Chat\n4. Group Chat")
+    alert("Upgrade to PINKCHAT PREMIUM $9.99/mo\nYou get:\n1. Unlimited AI messages\n2. Unlimited AI Image Gen\n3. Export Chat\n4. Voice Call")
     setIsPremium(true); localStorage.setItem("pinkchat-premium", "true")
   }
 
@@ -72,31 +86,23 @@ export default function App() {
     a.click()
   }
 
-  // NEW: AI IMAGE GENERATION WITH HUGGINGFACE FREE API
   const generateImage = async (prompt) => {
     setGeneratingImage(true)
     try {
       const response = await fetch(
         "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
-        {
-          method: "POST",
-          headers: {"Authorization": "Bearer hf_demo"}, // Free demo key
-          body: JSON.stringify({inputs: prompt + ", high quality, digital art"})
-        }
+        {method: "POST", headers: {"Authorization": "Bearer hf_demo"}, body: JSON.stringify({inputs: prompt + ", high quality"})}
       )
       const blob = await response.blob()
       const imageUrl = URL.createObjectURL(blob)
       sendMessage(imageUrl)
-    } catch(err) {
-      alert("Image generation failed. Try again in 30s")
-    }
+    } catch(err) {alert("Image generation failed. Try again")}
     setGeneratingImage(false)
   }
 
   const sendMessage = async (imageUrl = null, audioUrl = null, videoUrl = null, docName = null) => {
     if(!input.trim() &&!imageUrl &&!audioUrl &&!videoUrl &&!docName) return
     
-    // CHECK IF USER WANTS AI IMAGE
     const lowerInput = input.toLowerCase()
     if(input.startsWith("draw ") || input.startsWith("imagine ") || input.startsWith("generate ")) {
       const prompt = input
@@ -201,6 +207,19 @@ export default function App() {
     setChats({...chats, [chatKey]: []})
   }
 
+  // NEW: VOICE CALL
+  const startVoiceCall = () => {
+    alert(`Calling ${activeContact}...\n\nThis is Premium Feature\nDemo: Click OK to hear AI voice`)
+    const reply = "Hello " + user + "! This is " + activeContact + ". How are you today?"
+    speakText(reply)
+  }
+  const speakText = (text) => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    utterance.rate = 1
+    speechSynthesis.speak(utterance)
+  }
+
   if(!user) {
     return (
       <div style={{background: bgColor, color: textColor, minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "20px"}}>
@@ -291,22 +310,4 @@ export default function App() {
           <button onClick={() => fileInputRef.current.click()} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}><div style={{background: "#555", padding: "10px", borderRadius: "50%"}}>📎</div>Gallery</button>
 
           <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoUpload} style={{display: "none"}}/>
-          <button onClick={() => videoInputRef.current.click()} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}><div style={{background: "#555", padding: "10px", borderRadius: "50%"}}>🎥</div>Video</button>
-
-          <input type="file" accept=".pdf,.doc,.docx,.txt" ref={docInputRef} onChange={handleDocUpload} style={{display: "none"}}/>
-          <button onClick={() => docInputRef.current.click()} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}><div style={{background: "#555", padding: "10px", borderRadius: "50%"}}>📄</div>Doc</button>
-
-          <button onClick={() => toggleRecording('audio')} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>
-            <div style={{background: recording && recordingType==='audio'? "red" : "#555", padding: "10px", borderRadius: "50%"}}>{recording && recordingType==='audio'? "🔴" : "🎤"}</div>
-            {recording && recordingType==='audio'? "Stop" : "Voice"}
-          </button>
-
-          <button onClick={() => toggleRecording('video')} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>
-            <div style={{background: recording && recordingType==='video'? "red" : "#555", padding: "10px", borderRadius: "50%"}}>{recording && recordingType==='video'? "🔴" : "📹"}</div>
-            {recording && recordingType==='video'? "Stop" : "Live"}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+          <button onClick={() => videoInputRef
