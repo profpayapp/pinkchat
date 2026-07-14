@@ -10,13 +10,13 @@ export default function App() {
     Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
   const chatEndRef = useRef(null)
+  const fileInputRef = useRef(null) // NEW
 
   const contactColors = {
     Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
     Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
   }
 
-  // SAFE LOAD - FIXES CRASH ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem("crypto-prof-user") || ""
     const savedProfile = localStorage.getItem("crypto-prof-profile")
@@ -25,12 +25,9 @@ export default function App() {
     setUser(savedUser)
     setProfile(savedProfile? JSON.parse(savedProfile) : {name: "", bio: ""})
     
-    // FIX: If saved chats don't have "Group", add it
     if(savedChats) {
       const parsed = JSON.parse(savedChats)
-      if(!parsed.Group) {
-        parsed.Group = []
-      }
+      if(!parsed.Group) parsed.Group = []
       setChats(parsed)
     }
   }, [])
@@ -73,6 +70,25 @@ export default function App() {
     }, 1000)
   }
 
+  // NEW: GALLERY FUNCTION
+  const handleGallery = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSend = (e) => {
+    const file = e.target.files[0]
+    if(!file) return
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    const msg = {text: `📎 Sent: ${file.name}`, time, sender: user}
+    
+    setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
+    
+    setTimeout(() => {
+      const reply = activeContact==="Group"? "Group: Nice file! 👥" : "I got your file! 📎"
+      setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
+    }, 1000)
+  }
+
   const groupReply = () => {
     const aiList = [
       {name: "Prof", text: "Prof: Great point! Let me break this down 💡"},
@@ -105,10 +121,7 @@ export default function App() {
   }
 
   const clearChat = () => {setChats({...chats, [activeContact]: []})}
-  const clearAllData = () => { // NEW: EMERGENCY RESET BUTTON
-    localStorage.clear()
-    window.location.reload()
-  }
+  const clearAllData = () => {localStorage.clear(); window.location.reload()}
   const contacts = ["Group", "Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"]
 
   if(!user) {
@@ -141,6 +154,8 @@ export default function App() {
 
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
+      <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} /> {/* HIDDEN */}
+      
       <div style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", padding: "10px", borderRadius: "15px", marginBottom: "10px", textAlign: "center"}}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
         <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | {profile.bio}</p>
@@ -179,11 +194,11 @@ export default function App() {
       </div>
 
       <div style={{display: "flex", gap: "10px", justifyContent: "space-around", marginTop: "10px"}}>
-        <button style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
-        <button style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎥 Video</button>
-        <button style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📄 Doc</button>
-        <button style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎤 Voice</button>
-        <button style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📹 Live</button>
+        <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
+        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎥 Video</button>
+        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
+        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎤 Voice</button>
+        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📹 Live</button>
       </div>
     </div>
   )
