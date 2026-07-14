@@ -14,8 +14,8 @@ export default function App() {
   const [liveStream, setLiveStream] = useState(null)
   const [typing, setTyping] = useState("")
   const [viewerCount, setViewerCount] = useState(0)
-  const [liveViewers, setLiveViewers] = useState([]) // NEW
-  const [gifts, setGifts] = useState([]) // NEW
+  const [liveViewers, setLiveViewers] = useState([])
+  const [gifts, setGifts] = useState([])
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
@@ -30,7 +30,7 @@ export default function App() {
     Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
   }
 
-  const giftList = [ // NEW
+  const giftList = [
     {emoji: "❤️", name: "Heart", coins: 1},
     {emoji: "🌹", name: "Rose", coins: 5},
     {emoji: "🔥", name: "Fire", coins: 10},
@@ -150,7 +150,6 @@ export default function App() {
     }, 1000)
   }
 
-  // NEW: JOIN LIVE
   const joinLive = (viewerName) => {
     if(!liveViewers.includes(viewerName)) {
       setLiveViewers(prev => [...prev, viewerName])
@@ -161,14 +160,12 @@ export default function App() {
     }
   }
 
-  // NEW: SEND GIFT
   const sendGift = (gift) => {
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const msg = {text: `${user} sent ${gift.emoji} ${gift.name}!`, time, sender: user}
     setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
     setGifts(prev => [...prev, gift])
 
-    // AI reactions
     setTimeout(() => {
       const ai = ["Prof", "Queen", "Indigo"][Math.floor(Math.random()*3)]
       const reactions = {
@@ -362,7 +359,6 @@ export default function App() {
             🔴 LIVE • {viewerCount} viewers 👁️
           </div>
 
-          {/* NEW: JOIN LIVE BUTTONS */}
           <div style={{display: "flex", gap: "5px", flexWrap: "wrap", justifyContent: "center", margin: "5px 0"}}>
             {["Fan1", "Fan2", "Fan3"].map(fan => (
               <button key={fan} onClick={() => joinLive(fan)} 
@@ -372,15 +368,17 @@ export default function App() {
             ))}
           </div>
 
-          {/* NEW: GIFTS */}
-          <div style={{display: "flex", gap: "8px", justifyContent: "center", margin: "5px 0"}}>
+          {/* BIG VISIBLE GIFTS */}
+          <div style={{display: "flex", gap: "12px", justifyContent: "center", margin: "10px 0", background: "#1a1a1a", padding: "8px", borderRadius: "10px", flexWrap: "wrap"}}>
+            <p style={{width: "100%", textAlign: "center", color: "#ff69b4", fontSize: "12px", margin: "0", fontWeight: "bold"}}>Send Gift:</p>
             {giftList.map(gift => (
               <button key={gift.name} onClick={() => sendGift(gift)}
-                style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", border: "none", borderRadius: "50%", width: "40px", height: "40px", fontSize: "20px"}}>
+                style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", border: "none", borderRadius: "50%", width: "50px", height: "50px", fontSize: "24px", cursor: "pointer"}}>
                 {gift.emoji}
               </button>
             ))}
           </div>
+
         </div>
       )}
 
