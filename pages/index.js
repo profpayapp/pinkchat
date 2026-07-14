@@ -14,6 +14,7 @@ export default function App() {
   const fileInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
+  const lastAudioRef = useRef(null) // NEW: play immediately
 
   const contactColors = {
     Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
@@ -47,6 +48,12 @@ export default function App() {
   const bgColor = dark? "#0e0e0e" : "#ffffff"
   const textColor = dark? "#ffffff" : "#000"
   const chatBg = dark? "#1a1a1a" : "#f1f1f1"
+
+  const playBeep = () => { // NEW: PIM SOUND
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT')
+    audio.volume = 0.3
+    audio.play()
+  }
 
   const handleLogin = () => {
     if(profile.name.trim()) {
@@ -89,8 +96,8 @@ export default function App() {
     }, 1000)
   }
 
-  // FIXED: SAVE REAL AUDIO + BIG BUTTON
   const startRecording = async () => {
+    playBeep() // PIM START
     setRecording(true)
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     mediaRecorderRef.current = new MediaRecorder(stream)
@@ -101,10 +108,13 @@ export default function App() {
     }
     
     mediaRecorderRef.current.onstop = () => {
+      playBeep() // PIM STOP
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-      const audioUrl = URL.createObjectURL(audioBlob) // SAVE REAL AUDIO
+      const audioUrl = URL.createObjectURL(audioBlob)
+      lastAudioRef.current = audioUrl // SAVE TO PLAY
+      
       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `🎤 Voice Note`, audio: audioUrl, time, sender: user}
+      const msg = {text: `🎤 Voice Note ▶️ Tap to play`, time, sender: user, hasAudio: true}
       setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
       
       setTimeout(() => {
@@ -123,8 +133,10 @@ export default function App() {
     mediaRecorderRef.current?.stop()
   }
 
-  const playAudio = (audioUrl) => {
-    new Audio(audioUrl).play() // PLAY ON TAP
+  const playLastAudio = () => { // FIXED: PLAY ON TAP
+    if(lastAudioRef.current) {
+      new Audio(lastAudioRef.current).play()
+    }
   }
 
   const groupReply = () => {
@@ -217,10 +229,10 @@ export default function App() {
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
             <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
             <span 
-              onClick={() => m.audio && playAudio(m.audio)} // PLAY ON CLICK
-              style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.audio? "pointer" : "default"}}
+              onClick={() => m.hasAudio && playLastAudio()} // TAP TO PLAY
+              style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
             >
-              {m.text} {m.audio && "▶️ Tap to play"}
+              {m.text}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
           </div>
@@ -239,7 +251,7 @@ export default function App() {
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎥 Video</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
         
-        {/* BIGGER VOICE BUTTON */}
+        {/* SMALLER BUTTON */}
         <button 
           onMouseDown={startRecording} 
           onMouseUp={stopRecording}
@@ -249,12 +261,12 @@ export default function App() {
             background: recording? "red" : "linear-gradient(90deg, #ff69b4, #ffa500)", 
             border: "none", 
             color: "#fff", 
-            fontSize: "14px",
-            padding: "12px 18px",
-            borderRadius: "25px",
+            fontSize: "11px",
+            padding: "8px 14px",
+            borderRadius: "20px",
             fontWeight: "bold"
           }}>
-          🎤 {recording? "Recording..." : "Hold to Talk"}
+          🎤 {recording? "Rec..." : "Talk"}
         </button>
         
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📹 Live</button>
