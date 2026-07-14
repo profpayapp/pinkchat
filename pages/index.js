@@ -10,16 +10,17 @@ export default function App() {
     Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
   const [recording, setRecording] = useState(false)
+  const [isLive, setIsLive] = useState(false) // NEW
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
-  const docInputRef = useRef(null) // NEW
+  const docInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const lastAudioRef = useRef(null)
 
   const contactColors = {
-    Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
+    Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd",
     Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
   }
 
@@ -27,10 +28,10 @@ export default function App() {
     const savedUser = localStorage.getItem("crypto-prof-user") || ""
     const savedProfile = localStorage.getItem("crypto-prof-profile")
     const savedChats = localStorage.getItem("crypto-prof-chats")
-    
+
     setUser(savedUser)
     setProfile(savedProfile? JSON.parse(savedProfile) : {name: "", bio: ""})
-    
+
     if(savedChats) {
       const parsed = JSON.parse(savedChats)
       if(!parsed.Group) parsed.Group = []
@@ -69,10 +70,10 @@ export default function App() {
     if(!input.trim()) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const newMsg = {text: input, time, sender: user}
-    
+
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], newMsg]}))
     setInput("")
-    
+
     setTimeout(() => {
       if(activeContact === "Group") {
         groupReply()
@@ -84,16 +85,16 @@ export default function App() {
 
   const handleGallery = () => {fileInputRef.current?.click()}
   const handleVideo = () => {videoInputRef.current?.click()}
-  const handleDoc = () => {docInputRef.current?.click()} // NEW
+  const handleDoc = () => {docInputRef.current?.click()}
 
   const handleFileSend = (e) => {
     const file = e.target.files[0]
     if(!file) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const msg = {text: `📎 Sent: ${file.name}`, time, sender: user}
-    
+
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
-    
+
     setTimeout(() => {
       const reply = activeContact==="Group"? "Group: Nice file! 👥" : "I got your file! 📎"
       setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
@@ -106,28 +107,60 @@ export default function App() {
     const videoUrl = URL.createObjectURL(file)
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const msg = {text: `🎥 Video`, video: videoUrl, time, sender: user}
-    
+
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
-    
+
     setTimeout(() => {
       const reply = activeContact==="Group"? "Group: Nice video! 👥" : "I got your video! 🎥"
       setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
     }, 1000)
   }
 
-  // NEW: DOCUMENT SEND
   const handleDocSend = (e) => {
     const file = e.target.files[0]
     if(!file) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const msg = {text: `📄 Document: ${file.name}`, time, sender: user}
-    
+
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
-    
+
     setTimeout(() => {
       const reply = activeContact==="Group"? "Group: Got the document! Let me read it 👥" : "I got your document! 📄"
       setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
     }, 1000)
+  }
+
+  // NEW: LIVE VIDEO
+  const toggleLive = () => {
+    if(!isLive) {
+      setIsLive(true)
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      const msg = {text: `📹 ${user} is LIVE 🔴`, time, sender: user}
+      setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
+
+      // 6 AIs join live and comment
+      const liveComments = [
+        "Prof: Welcome to the live! 💡",
+        "Queen: Hi everyone! 👑",
+        "Indigo: This is fire 🔧",
+        "Boss: Let's go viral! 💰",
+        "Tech: Stream quality is good 💻",
+        "Gist: Omo I don join 😂"
+      ]
+
+      liveComments.forEach((comment, index) => {
+        setTimeout(() => {
+          const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]}))
+        }, (index + 1) * 1500)
+      })
+
+    } else {
+      setIsLive(false)
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      const msg = {text: `📹 Live ended`, time, sender: user}
+      setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
+    }
   }
 
   const toggleRecording = async () => {
@@ -137,29 +170,29 @@ export default function App() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaRecorderRef.current = new MediaRecorder(stream)
       audioChunksRef.current = []
-      
+
       mediaRecorderRef.current.ondataavailable = (e) => {
         audioChunksRef.current.push(e.data)
       }
-      
+
       mediaRecorderRef.current.onstop = () => {
         playBeep()
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         const audioUrl = URL.createObjectURL(audioBlob)
         lastAudioRef.current = audioUrl
-        
+
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         const msg = {text: `🎤 Voice Note ▶️ Tap to play`, time, sender: user, hasAudio: true}
         setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
-        
+
         setTimeout(() => {
           const reply = activeContact==="Group"? "Group: I heard your voice note! 👥" : "I heard your voice note! 🔊"
           setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
         }, 1000)
-        
+
         stream.getTracks().forEach(track => track.stop())
       }
-      
+
       mediaRecorderRef.current.start()
     } else {
       setRecording(false)
@@ -182,7 +215,7 @@ export default function App() {
       {name: "Tech", text: "Tech: I can code that for you 💻"},
       {name: "Gist", text: "Gist: Omo this is interesting o 😂"}
     ]
-    
+
     aiList.forEach((ai, index) => {
       setTimeout(() => {
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
@@ -215,20 +248,20 @@ export default function App() {
           <h1 style={{fontSize: "32px", fontWeight: "900", color: "#fff", margin: "0"}}>PINKCHAT 💖</h1>
           <p style={{fontSize: "12px", color: "#fff", margin: "0"}}>by CRYPTO-PROF | AI App Owner</p>
         </div>
-        
-        <input 
-          value={profile.name} 
-          onChange={e => setProfile({...profile, name: e.target.value})} 
-          placeholder="Enter Username" 
+
+        <input
+          value={profile.name}
+          onChange={e => setProfile({...profile, name: e.target.value})}
+          placeholder="Enter Username"
           style={{padding: "12px", borderRadius: "10px", border: "2px solid #ff69b4", margin: "8px 0", width: "80%", background: "#222", color: "#fff"}}
         />
-        <input 
-          value={profile.bio} 
-          onChange={e => setProfile({...profile, bio: e.target.value})} 
-          placeholder="Bio" 
+        <input
+          value={profile.bio}
+          onChange={e => setProfile({...profile, bio: e.target.value})}
+          placeholder="Bio"
           style={{padding: "12px", borderRadius: "10px", border: "2px solid #ff69b4", margin: "8px 0", width: "80%", background: "#222", color: "#fff"}}
         />
-        
+
         <button onClick={handleLogin} style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", color: "#fff", border: "none", padding: "14px 40px", borderRadius: "25px", fontWeight: "bold", fontSize: "16px", marginTop: "10px"}}>
           Join PINKCHAT
         </button>
@@ -240,8 +273,8 @@ export default function App() {
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
       <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} />
       <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSend} style={{display: "none"}} />
-      <input type="file" accept=".pdf,.doc,.docx,.txt,.xlsx" ref={docInputRef} onChange={handleDocSend} style={{display: "none"}} /> {/* NEW */}
-      
+      <input type="file" accept=".pdf,.doc,.docx,.txt,.xlsx" ref={docInputRef} onChange={handleDocSend} style={{display: "none"}} />
+
       <div style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", padding: "10px", borderRadius: "15px", marginBottom: "10px", textAlign: "center"}}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
         <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | {profile.bio}</p>
@@ -249,7 +282,7 @@ export default function App() {
 
       <div style={{margin: "8px 0", display: "flex", gap: "6px", flexWrap: "wrap"}}>
         {contacts.map(name => (
-          <button key={name} onClick={() => setActiveContact(name)} 
+          <button key={name} onClick={() => setActiveContact(name)}
             style={{background: activeContact===name? contactColors[name] : "#333", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: name==="Group"?"bold":"normal"}}>
             {name === "Group"? "👥 Group" : name}
           </button>
@@ -260,24 +293,24 @@ export default function App() {
       </div>
 
       <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "60vh", overflowY: "auto"}}>
-        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"}</h3>
+        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"} {isLive && "🔴 LIVE"}</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
             <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
-            
+
             {m.video? (
               <div style={{background: "#fff", padding: "6px", borderRadius: "12px", display: "inline-block", maxWidth: "60%"}}>
                 <video src={m.video} controls style={{width: "100%", borderRadius: "8px"}} />
               </div>
             ) : (
-              <span 
+              <span
                 onClick={() => m.hasAudio && playLastAudio()}
                 style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
               >
                 {m.text}
               </span>
             )}
-            
+
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
           </div>
         ))}
@@ -293,14 +326,14 @@ export default function App() {
       <div style={{display: "flex", gap: "10px", justifyContent: "space-around", marginTop: "10px"}}>
         <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
         <button onClick={handleVideo} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎥 Video</button>
-        <button onClick={handleDoc} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📄 Doc</button> {/* ACTIVE NOW */}
-        
-        <button 
+        <button onClick={handleDoc} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📄 Doc</button>
+
+        <button
           onClick={toggleRecording}
           style={{
-            background: recording? "red" : "linear-gradient(90deg, #ff69b4, #ffa500)", 
-            border: "none", 
-            color: "#fff", 
+            background: recording? "red" : "linear-gradient(90deg, #ff69b4, #ffa500)",
+            border: "none",
+            color: "#fff",
             fontSize: "11px",
             padding: "8px 14px",
             borderRadius: "20px",
@@ -308,8 +341,19 @@ export default function App() {
           }}>
           🎤 {recording? "Stop" : "Talk"}
         </button>
-        
-        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📹 Live</button>
+
+        {/* LIVE BUTTON */}
+        <button
+          onClick={toggleLive}
+          style={{
+            background: isLive? "red" : "none",
+            border: "none",
+            color: isLive? "#fff" : textColor,
+            fontSize: "10px",
+            fontWeight: isLive? "bold" : "normal"
+          }}>
+          📹 {isLive? "End Live" : "Live"}
+        </button>
       </div>
     </div>
   )
