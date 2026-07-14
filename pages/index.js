@@ -9,8 +9,11 @@ export default function App() {
   const [chats, setChats] = useState({
     Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
+  const [recording, setRecording] = useState(false) // NEW
   const chatEndRef = useRef(null)
-  const fileInputRef = useRef(null) // NEW
+  const fileInputRef = useRef(null)
+  const mediaRecorderRef = useRef(null) // NEW
+  const audioChunksRef = useRef([]) // NEW
 
   const contactColors = {
     Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
@@ -70,10 +73,7 @@ export default function App() {
     }, 1000)
   }
 
-  // NEW: GALLERY FUNCTION
-  const handleGallery = () => {
-    fileInputRef.current?.click()
-  }
+  const handleGallery = () => {fileInputRef.current?.click()}
 
   const handleFileSend = (e) => {
     const file = e.target.files[0]
@@ -87,6 +87,38 @@ export default function App() {
       const reply = activeContact==="Group"? "Group: Nice file! 👥" : "I got your file! 📎"
       setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
     }, 1000)
+  }
+
+  // NEW: VOICE RECORDING
+  const startRecording = async () => {
+    setRecording(true)
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorderRef.current = new MediaRecorder(stream)
+    audioChunksRef.current = []
+    
+    mediaRecorderRef.current.ondataavailable = (e) => {
+      audioChunksRef.current.push(e.data)
+    }
+    
+    mediaRecorderRef.current.onstop = () => {
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      const msg = {text: `🎤 Voice Note`, time, sender: user}
+      setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
+      
+      setTimeout(() => {
+        const reply = activeContact==="Group"? "Group: I heard your voice note! 👥" : "I heard your voice note! 🔊"
+        setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
+      }, 1000)
+      
+      stream.getTracks().forEach(track => track.stop())
+    }
+    
+    mediaRecorderRef.current.start()
+  }
+
+  const stopRecording = () => {
+    setRecording(false)
+    mediaRecorderRef.current?.stop()
   }
 
   const groupReply = () => {
@@ -154,7 +186,7 @@ export default function App() {
 
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
-      <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} /> {/* HIDDEN */}
+      <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} />
       
       <div style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", padding: "10px", borderRadius: "15px", marginBottom: "10px", textAlign: "center"}}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
@@ -197,7 +229,14 @@ export default function App() {
         <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎥 Video</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
-        <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎤 Voice</button>
+        <button 
+          onMouseDown={startRecording} 
+          onMouseUp={stopRecording}
+          onTouchStart={startRecording}
+          onTouchEnd={stopRecording}
+          style={{background: recording? "red" : "none", border: "none", color: textColor, fontSize: "10px"}}>
+          🎤 {recording? "Recording..." : "Voice"}
+        </button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📹 Live</button>
       </div>
     </div>
