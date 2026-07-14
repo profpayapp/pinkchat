@@ -4,7 +4,7 @@ export default function App() {
   const [dark, setDark] = useState(true)
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState({name: "", bio: ""})
-  const [activeContact, setActiveContact] = useState("Prof")
+  const [activeContact, setActiveContact] = useState("Group") // NEW: GROUP
   const [input, setInput] = useState("")
   const [recording, setRecording] = useState(false)
   const [recordingType, setRecordingType] = useState(null)
@@ -18,17 +18,18 @@ export default function App() {
   const chunksRef = useRef([])
   
   const [contacts] = useState({
+    Group: "#ff1493", // NEW PINK GROUP COLOR
     Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
     Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
   })
   
   const [chats, setChats] = useState({
+    Group: [], // NEW GROUP CHAT
     Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
   const [isPremium, setIsPremium] = useState(false)
   const chatEndRef = useRef(null)
 
-  // LOAD OLD DATA
   useEffect(() => {
     const savedUser = localStorage.getItem("crypto-prof-user")
     const savedChats = localStorage.getItem("crypto-prof-chats")
@@ -41,7 +42,6 @@ export default function App() {
     if(savedPremium) setIsPremium(JSON.parse(savedPremium))
   }, [])
 
-  // SAVE DATA
   useEffect(() => {
     if(user) {
       localStorage.setItem("crypto-prof-chats", JSON.stringify(chats))
@@ -49,10 +49,8 @@ export default function App() {
     }
   }, [chats, user, profile])
 
-  // AUTO SCROLL
   useEffect(() => {chatEndRef.current?.scrollIntoView({ behavior: "smooth" })}, [chats, activeContact])
 
-  // CLEANUP CAMERA WHEN APP CLOSES - NEW FIX
   useEffect(() => {
     return () => {
       if(mediaStreamRef.current) {
@@ -72,21 +70,47 @@ export default function App() {
       localStorage.setItem("crypto-prof-profile", JSON.stringify(profile))
     }
   }
-  const handleLogout = () => {
-    setUser(null)
-    localStorage.removeItem("crypto-prof-user")
-  }
 
   const sendMessage = async (imageUrl = null, audioUrl = null, videoUrl = null, docName = null) => {
     if(!input.trim() &&!imageUrl &&!audioUrl &&!videoUrl &&!docName) return
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     const newMsg = {text: input, image: imageUrl, audio: audioUrl, video: videoUrl, doc: docName, time, sender: user}
+    
+    // IF IN GROUP, SEND TO GROUP
     setChats({...chats, [activeContact]: [...chats[activeContact], newMsg]})
     setInput("")
     
     setTimeout(() => {
-      aiReply(activeContact, input, imageUrl, audioUrl, videoUrl, docName)
+      if(activeContact === "Group") {
+        groupReply(input, imageUrl, audioUrl, videoUrl, docName) // ALL 6 REPLY
+      } else {
+        aiReply(activeContact, input, imageUrl, audioUrl, videoUrl, docName) // 1 AI REPLY
+      }
     }, 1000)
+  }
+
+  // NEW: ALL 6 AIs REPLY IN GROUP
+  const groupReply = (msg, imageUrl, audioUrl, videoUrl, docName) => {
+    const aiNames = ["Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"]
+    aiNames.forEach((name, index) => {
+      setTimeout(() => {
+        let reply = ""
+        if(name === "Prof") reply = "As Prof: Great point! Let me break this down 💡"
+        if(name === "Queen") reply = "Queen here: I agree with Prof, and also... 👑"
+        if(name === "Indigo") reply = "Indigo: From tech angle, this is smart 🔧"
+        if(name === "Boss") reply = "Boss: Let's make money from this! 💰"
+        if(name === "Tech") reply = "Tech: I can code that for you 💻"
+        if(name === "Gist") reply = "Gist: Omo this is interesting o 😂"
+        
+        if(docName) reply = `${name}: Got the file ${docName} 📄`
+        if(videoUrl) reply = `${name}: This video is fire! 🔥`
+        if(audioUrl) reply = `${name}: Heard your voice note! 🔊`
+        if(imageUrl) reply = `${name}: Nice picture! 😍`
+        
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        setChats(prev => ({...prev, Group: [...prev.Group, {text: reply, time, sender: name}]}))
+      }, index * 800) // Each AI replies 0.8s after the last
+    })
   }
 
   const aiReply = (name, msg, imageUrl, audioUrl, videoUrl, docName) => {
@@ -113,7 +137,6 @@ export default function App() {
     }
   }
 
-  // FIXED: KEEP CAMERA ON
   const startCameraPreview = async () => {
     try {
       if(!mediaStreamRef.current) {
@@ -135,7 +158,6 @@ export default function App() {
         const url = URL.createObjectURL(blob)
         if(type === 'video') sendMessage(null, null, url)
         else sendMessage(null, url)
-        // DON'T STOP STREAM HERE - KEEP IT FOR LIVE
       }
       mediaRecorderRef.current.start()
       setRecording(true)
@@ -143,7 +165,6 @@ export default function App() {
     } catch(err) {alert("Recording Error: " + err.message)}
   }
 
-  // FIXED: DON'T KILL CAMERA
   const stopRecording = () => {
     if(mediaRecorderRef.current) mediaRecorderRef.current.stop()
     setRecording(false)
@@ -214,8 +235,8 @@ export default function App() {
       <div style={{margin: "8px 0", display: "flex", gap: "6px", flexWrap: "wrap"}}>
         {Object.keys(contacts).map(name => (
           <button key={name} onClick={() => setActiveContact(name)} 
-            style={{background: activeContact===name? contacts[name] : "#333", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>
-            {name}
+            style={{background: activeContact===name? contacts[name] : "#333", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: name==="Group"?"bold":"normal"}}>
+            {name === "Group"? "👥 Group" : name}
           </button>
         ))}
         <button onClick={() => setDark(!dark)} style={{background: "#555", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>Light</button>
@@ -223,16 +244,17 @@ export default function App() {
       </div>
 
       {showCamera && (
-        <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px"}}>
+        <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px", position: "relative"}}>
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "10px"}}/>
           <div style={{position: "absolute", top: "10px", left: "10px", background: "red", color: "#fff", padding: "5px 10px", borderRadius: "15px", fontSize: "12px"}}>🔴 LIVE</div>
         </div>
       )}
 
       <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "50vh", overflowY: "auto"}}>
-        <h3>{activeContact}</h3>
+        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"}</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
+            <div style={{fontSize: "10px", color: contacts[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
             <span style={{background: m.sender===user? "linear-gradient(45deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%"}}>
               {m.image && <img src={m.image} style={{maxWidth: "180px", borderRadius: "10px", display: "block"}}/>}
               {m.audio && <audio src={m.audio} controls style={{width: "180px"}}/>}
@@ -248,7 +270,7 @@ export default function App() {
 
       <div style={{marginTop: "8px", display: "flex", gap: "8px"}}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
-          placeholder="Message" style={{flex: 1, padding: "12px", borderRadius: "25px", border: "none", outline: "none"}}/>
+          placeholder="Message Group..." style={{flex: 1, padding: "12px", borderRadius: "25px", border: "none", outline: "none"}}/>
         <button onClick={() => sendMessage()} style={{background: "linear-gradient(45deg, #ff69b4, #ffa500)", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "25px", fontWeight: "bold"}}>Send</button>
       </div>
 
