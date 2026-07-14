@@ -5,11 +5,11 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [username, setUsername] = useState("")
   const [activeContact, setActiveContact] = useState("Prof")
-  const [groupMode, setGroupMode] = useState(false) // NEW: GROUP CHAT
+  const [groupMode, setGroupMode] = useState(false)
   const [input, setInput] = useState("")
   const [recording, setRecording] = useState(false)
   const [recordingType, setRecordingType] = useState(null)
-  const [typing, setTyping] = useState(null) // who is typing
+  const [typing, setTyping] = useState(null)
   const [showCamera, setShowCamera] = useState(false)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
@@ -30,18 +30,29 @@ export default function App() {
   
   const [chats, setChats] = useState({
     Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: [],
-    Group: [] // NEW GROUP CHAT
+    Group: []
   })
   const [isPremium, setIsPremium] = useState(false)
   const chatEndRef = useRef(null)
 
+  // FIXED: AUTO MIGRATE OLD CHATS
   useEffect(() => {
-    const savedUser = localStorage.getItem("pinkchat-user")
-    const savedChats = localStorage.getItem("pinkchat-chats")
-    const savedPremium = localStorage.getItem("pinkchat-premium")
-    if(savedUser) setUser(savedUser)
-    if(savedChats) setChats(JSON.parse(savedChats))
-    if(savedPremium) setIsPremium(JSON.parse(savedPremium))
+    const savedUser = localStorage.getItem("pinkchat-user") || localStorage.getItem("crypto-prof-user")
+    const savedChats = localStorage.getItem("pinkchat-chats") || localStorage.getItem("crypto-prof-chats") // CHECK OLD NAME TOO
+    const savedPremium = localStorage.getItem("pinkchat-premium") || localStorage.getItem("crypto-prof-premium")
+    
+    if(savedUser) {
+      setUser(savedUser)
+      localStorage.setItem("pinkchat-user", savedUser) // migrate to new name
+    }
+    if(savedChats) {
+      setChats(JSON.parse(savedChats))
+      localStorage.setItem("pinkchat-chats", savedChats) // migrate to new name
+    }
+    if(savedPremium) {
+      setIsPremium(JSON.parse(savedPremium))
+      localStorage.setItem("pinkchat-premium", savedPremium)
+    }
   }, [])
 
   useEffect(() => {
@@ -92,7 +103,6 @@ export default function App() {
     setInput("")
     
     if(groupMode) {
-      // GROUP CHAT: All 6 AIs reply one after another
       Object.keys(contacts).forEach((name, index) => {
         setTimeout(() => {
           setTyping(name)
@@ -111,7 +121,6 @@ export default function App() {
     }
   }
 
-  // REAL AI FOR 1-ON-1
   const aiReply = async (name, msg, imageUrl, audioUrl, videoUrl, docName) => {
     if(docName) return addAiMsg(name, `Got your document: ${docName} 📄`)
     if(videoUrl) return addAiMsg(name, "Omo this video is fire! 🔥")
@@ -123,7 +132,6 @@ export default function App() {
     addAiMsg(name, reply)
   }
   
-  // REAL AI FOR GROUP
   const aiReplyGroup = (name, msg) => {
     const personality = contacts[name].personality
     let reply = ""
