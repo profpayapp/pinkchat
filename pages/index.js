@@ -11,12 +11,13 @@ export default function App() {
   })
   const [recording, setRecording] = useState(false)
   const [isLive, setIsLive] = useState(false)
-  const [liveStream, setLiveStream] = useState(null) // NEW
+  const [liveStream, setLiveStream] = useState(null)
+  const [typing, setTyping] = useState("") // NEW
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
   const docInputRef = useRef(null)
-  const videoRef = useRef(null) // NEW
+  const videoRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const lastAudioRef = useRef(null)
@@ -50,7 +51,6 @@ export default function App() {
 
   useEffect(() => {chatEndRef.current?.scrollIntoView({ behavior: "smooth" })}, [chats, activeContact])
 
-  // SHOW CAMERA WHEN LIVE STARTS
   useEffect(() => {
     if(isLive && videoRef.current && liveStream) {
       videoRef.current.srcObject = liveStream
@@ -85,7 +85,7 @@ export default function App() {
 
     setTimeout(() => {
       if(activeContact === "Group") {
-        groupReply()
+        groupReplyWithTyping() // CHANGED
       } else {
         aiReply(activeContact)
       }
@@ -139,7 +139,6 @@ export default function App() {
     }, 1000)
   }
 
-  // FIXED: REAL LIVE WITH CAMERA
   const toggleLive = async () => {
     if(!isLive) {
       try {
@@ -151,7 +150,6 @@ export default function App() {
         const msg = {text: `📹 ${user} is LIVE 🔴`, time, sender: user}
         setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
 
-        // 6 AIs join live and comment
         const liveComments = [
           "Prof: Welcome to the live! 💡",
           "Queen: Hi everyone! 👑",
@@ -172,7 +170,6 @@ export default function App() {
         alert("Camera access denied. Please allow camera permission.")
       }
     } else {
-      // STOP LIVE
       liveStream?.getTracks().forEach(track => track.stop())
       setLiveStream(null)
       setIsLive(false)
@@ -225,7 +222,8 @@ export default function App() {
     }
   }
 
-  const groupReply = () => {
+  // NEW: GROUP REPLY WITH TYPING ANIMATION
+  const groupReplyWithTyping = () => {
     const aiList = [
       {name: "Prof", text: "Prof: Great point! Let me break this down 💡"},
       {name: "Queen", text: "Queen: I agree with Prof, and also... 👑"},
@@ -237,23 +235,33 @@ export default function App() {
 
     aiList.forEach((ai, index) => {
       setTimeout(() => {
-        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        setChats(prev => ({...prev, Group: [...prev.Group, {text: ai.text, time, sender: ai.name}]}))
-      }, (index + 1) * 700)
+        setTyping(`${ai.name} is typing...`) // SHOW TYPING
+
+        setTimeout(() => {
+          const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          setChats(prev => ({...prev, Group: [...prev.Group, {text: ai.text, time, sender: ai.name}]}))
+          setTyping("") // HIDE TYPING
+        }, 1200) // 1.2s typing delay
+
+      }, index * 2000) // 2s between each AI
     })
   }
 
   const aiReply = (name) => {
-    const replies = {
-      Prof: "Prof: Let me explain this properly 💡",
-      Queen: "Queen: You look good today 👑",
-      Indigo: "Indigo: That's a smart question 🔧",
-      Boss: "Boss: We go make money 💰",
-      Tech: "Tech: I can help you build that 💻",
-      Gist: "Gist: Abeg tell me more gist 😂"
-    }
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    setChats(prev => ({...prev, [name]: [...prev[name], {text: replies[name], time, sender: name}]}))
+    setTyping(`${name} is typing...`)
+    setTimeout(() => {
+      const replies = {
+        Prof: "Prof: Let me explain this properly 💡",
+        Queen: "Queen: You look good today 👑",
+        Indigo: "Indigo: That's a smart question 🔧",
+        Boss: "Boss: We go make money 💰",
+        Tech: "Tech: I can help you build that 💻",
+        Gist: "Gist: Abeg tell me more gist 😂"
+      }
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      setChats(prev => ({...prev, [name]: [...prev[name], {text: replies[name], time, sender: name}]}))
+      setTyping("")
+    }, 1200)
   }
 
   const clearChat = () => {setChats({...chats, [activeContact]: []})}
@@ -299,7 +307,6 @@ export default function App() {
         <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | {profile.bio}</p>
       </div>
 
-      {/* LIVE VIDEO PREVIEW */}
       {isLive && (
         <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px", padding: "5px"}}>
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "8px", maxHeight: "250px"}} />
@@ -341,6 +348,14 @@ export default function App() {
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
           </div>
         ))}
+
+        {/* TYPING ANIMATION */}
+        {typing && (
+          <div style={{fontSize: "11px", color: "#ff69b4", fontStyle: "italic", margin: "5px 0"}}>
+            {typing} <span className="dots">...</span>
+          </div>
+        )}
+
         <div ref={chatEndRef} />
       </div>
 
