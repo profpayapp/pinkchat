@@ -7,21 +7,32 @@ export default function App() {
   const [activeContact, setActiveContact] = useState("Prof")
   const [input, setInput] = useState("")
   const [chats, setChats] = useState({
-    Group: [], // NEW
-    Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
+    Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
   const chatEndRef = useRef(null)
 
+  const contactColors = {
+    Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
+    Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
+  }
+
+  // SAFE LOAD - FIXES CRASH ON REFRESH
   useEffect(() => {
     const savedUser = localStorage.getItem("crypto-prof-user") || ""
-    const savedChats = localStorage.getItem("crypto-prof-chats")
     const savedProfile = localStorage.getItem("crypto-prof-profile")
+    const savedChats = localStorage.getItem("crypto-prof-chats")
     
     setUser(savedUser)
     setProfile(savedProfile? JSON.parse(savedProfile) : {name: "", bio: ""})
-    setChats(savedChats? JSON.parse(savedChats) : {
-      Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
-    })
+    
+    // FIX: If saved chats don't have "Group", add it
+    if(savedChats) {
+      const parsed = JSON.parse(savedChats)
+      if(!parsed.Group) {
+        parsed.Group = []
+      }
+      setChats(parsed)
+    }
   }, [])
 
   useEffect(() => {
@@ -54,13 +65,51 @@ export default function App() {
     setInput("")
     
     setTimeout(() => {
-      const reply = activeContact === "Group"? "Group: All 6 AIs will reply soon 👥" : "I'm here for you 💖"
-      setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
+      if(activeContact === "Group") {
+        groupReply()
+      } else {
+        aiReply(activeContact)
+      }
     }, 1000)
   }
 
+  const groupReply = () => {
+    const aiList = [
+      {name: "Prof", text: "Prof: Great point! Let me break this down 💡"},
+      {name: "Queen", text: "Queen: I agree with Prof, and also... 👑"},
+      {name: "Indigo", text: "Indigo: From tech angle, this is smart 🔧"},
+      {name: "Boss", text: "Boss: Let's make money from this! 💰"},
+      {name: "Tech", text: "Tech: I can code that for you 💻"},
+      {name: "Gist", text: "Gist: Omo this is interesting o 😂"}
+    ]
+    
+    aiList.forEach((ai, index) => {
+      setTimeout(() => {
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        setChats(prev => ({...prev, Group: [...prev.Group, {text: ai.text, time, sender: ai.name}]}))
+      }, (index + 1) * 700)
+    })
+  }
+
+  const aiReply = (name) => {
+    const replies = {
+      Prof: "Prof: Let me explain this properly 💡",
+      Queen: "Queen: You look good today 👑",
+      Indigo: "Indigo: That's a smart question 🔧",
+      Boss: "Boss: We go make money 💰",
+      Tech: "Tech: I can help you build that 💻",
+      Gist: "Gist: Abeg tell me more gist 😂"
+    }
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    setChats(prev => ({...prev, [name]: [...prev[name], {text: replies[name], time, sender: name}]}))
+  }
+
   const clearChat = () => {setChats({...chats, [activeContact]: []})}
-  const contacts = ["Group", "Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"] // ADDED GROUP
+  const clearAllData = () => { // NEW: EMERGENCY RESET BUTTON
+    localStorage.clear()
+    window.location.reload()
+  }
+  const contacts = ["Group", "Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"]
 
   if(!user) {
     return (
@@ -100,20 +149,21 @@ export default function App() {
       <div style={{margin: "8px 0", display: "flex", gap: "6px", flexWrap: "wrap"}}>
         {contacts.map(name => (
           <button key={name} onClick={() => setActiveContact(name)} 
-            style={{background: activeContact===name? "#ff69b4" : "#333", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: name==="Group"?"bold":"normal"}}>
+            style={{background: activeContact===name? contactColors[name] : "#333", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px", fontWeight: name==="Group"?"bold":"normal"}}>
             {name === "Group"? "👥 Group" : name}
           </button>
         ))}
         <button onClick={() => setDark(!dark)} style={{background: "#555", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>Light</button>
         <button onClick={clearChat} style={{background: "red", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>Clear</button>
+        <button onClick={clearAllData} style={{background: "orange", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>Reset</button>
       </div>
 
       <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "60vh", overflowY: "auto"}}>
-        <h3>{activeContact} {activeContact==="Group" && "👥"}</h3>
+        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"}</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
-            <div style={{fontSize: "10px", fontWeight: "bold"}}>{m.sender}</div>
-            <span style={{background: m.sender===user? "#ff69b4" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%"}}>
+            <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
+            <span style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%"}}>
               {m.text}
             </span>
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
@@ -125,7 +175,7 @@ export default function App() {
       <div style={{marginTop: "8px", display: "flex", gap: "8px"}}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==="Enter" && sendMessage()}
           placeholder="Message..." style={{flex: 1, padding: "12px", borderRadius: "25px", border: "none", outline: "none"}}/>
-        <button onClick={sendMessage} style={{background: "#ff69b4", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "25px", fontWeight: "bold"}}>Send</button>
+        <button onClick={sendMessage} style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "25px", fontWeight: "bold"}}>Send</button>
       </div>
 
       <div style={{display: "flex", gap: "10px", justifyContent: "space-around", marginTop: "10px"}}>
