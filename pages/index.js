@@ -13,7 +13,9 @@ export default function App() {
   const [isLive, setIsLive] = useState(false)
   const [liveStream, setLiveStream] = useState(null)
   const [typing, setTyping] = useState("")
-  const [viewerCount, setViewerCount] = useState(0) // NEW
+  const [viewerCount, setViewerCount] = useState(0)
+  const [liveViewers, setLiveViewers] = useState([]) // NEW
+  const [gifts, setGifts] = useState([]) // NEW
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
@@ -27,6 +29,14 @@ export default function App() {
     Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd",
     Boss: "#00bfff", Tech: "#32cd32", Gist: "#ffa500"
   }
+
+  const giftList = [ // NEW
+    {emoji: "❤️", name: "Heart", coins: 1},
+    {emoji: "🌹", name: "Rose", coins: 5},
+    {emoji: "🔥", name: "Fire", coins: 10},
+    {emoji: "🚀", name: "Rocket", coins: 50},
+    {emoji: "👑", name: "Crown", coins: 100}
+  ]
 
   useEffect(() => {
     const savedUser = localStorage.getItem("crypto-prof-user") || ""
@@ -140,20 +150,52 @@ export default function App() {
     }, 1000)
   }
 
-  // UPDATED: LIVE WITH VIEWER COUNT
+  // NEW: JOIN LIVE
+  const joinLive = (viewerName) => {
+    if(!liveViewers.includes(viewerName)) {
+      setLiveViewers(prev => [...prev, viewerName])
+      setViewerCount(prev => prev + 1)
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      const msg = {text: `${viewerName} joined the live 👁️`, time, sender: "System"}
+      setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
+    }
+  }
+
+  // NEW: SEND GIFT
+  const sendGift = (gift) => {
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    const msg = {text: `${user} sent ${gift.emoji} ${gift.name}!`, time, sender: user}
+    setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
+    setGifts(prev => [...prev, gift])
+
+    // AI reactions
+    setTimeout(() => {
+      const ai = ["Prof", "Queen", "Indigo"][Math.floor(Math.random()*3)]
+      const reactions = {
+        "❤️": "Thank you for the heart! ❤️",
+        "🌹": "Wow a rose! 🌹",
+        "🔥": "This is fire! 🔥",
+        "🚀": "To the moon! 🚀",
+        "👑": "King behavior! 👑"
+      }
+      const reply = {text: `${ai}: ${reactions[gift.emoji]}`, time, sender: ai}
+      setChats(prev => ({...prev, Group: [...prev.Group, reply]}))
+    }, 800)
+  }
+
   const toggleLive = async () => {
     if(!isLive) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         setLiveStream(stream)
         setIsLive(true)
-        setViewerCount(Math.floor(Math.random() * 10) + 3) // 3-12 viewers
+        setLiveViewers(["Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"])
+        setViewerCount(6)
 
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        const msg = {text: `📹 ${user} is LIVE 🔴 • ${viewerCount} viewers`, time, sender: user}
+        const msg = {text: `📹 ${user} is LIVE 🔴 • 6 viewers`, time, sender: user}
         setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
 
-        // AIs welcome viewers
         const liveComments = [
           `Prof: Welcome ${viewerCount} people watching! 💡`,
           `Queen: Hi everyone! Thanks for joining 👑`,
@@ -166,13 +208,9 @@ export default function App() {
         liveComments.forEach((comment, index) => {
           setTimeout(() => {
             const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]}))
+            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}))
           }, (index + 1) * 1500)
         })
-
-        // Simulate viewers joining
-        setTimeout(() => setViewerCount(prev => prev + 2), 5000)
-        setTimeout(() => setViewerCount(prev => prev + 3), 10000)
 
       } catch(err) {
         alert("Camera access denied. Please allow camera permission.")
@@ -181,9 +219,11 @@ export default function App() {
       liveStream?.getTracks().forEach(track => track.stop())
       setLiveStream(null)
       setIsLive(false)
+      setLiveViewers([])
       setViewerCount(0)
+      setGifts([])
       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `📹 Live ended • ${viewerCount} total viewers`, time, sender: user}
+      const msg = {text: `📹 Live ended • ${viewerCount} viewers`, time, sender: user}
       setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
     }
   }
@@ -320,6 +360,26 @@ export default function App() {
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "8px", maxHeight: "250px"}} />
           <div style={{color: "red", textAlign: "center", fontWeight: "bold", fontSize: "14px"}}>
             🔴 LIVE • {viewerCount} viewers 👁️
+          </div>
+
+          {/* NEW: JOIN LIVE BUTTONS */}
+          <div style={{display: "flex", gap: "5px", flexWrap: "wrap", justifyContent: "center", margin: "5px 0"}}>
+            {["Fan1", "Fan2", "Fan3"].map(fan => (
+              <button key={fan} onClick={() => joinLive(fan)} 
+                style={{background: "#ff69b4", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "10px", fontSize: "10px"}}>
+                + Join as {fan}
+              </button>
+            ))}
+          </div>
+
+          {/* NEW: GIFTS */}
+          <div style={{display: "flex", gap: "8px", justifyContent: "center", margin: "5px 0"}}>
+            {giftList.map(gift => (
+              <button key={gift.name} onClick={() => sendGift(gift)}
+                style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", border: "none", borderRadius: "50%", width: "40px", height: "40px", fontSize: "20px"}}>
+                {gift.emoji}
+              </button>
+            ))}
           </div>
         </div>
       )}
