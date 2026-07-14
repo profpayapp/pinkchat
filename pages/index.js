@@ -16,7 +16,9 @@ export default function App() {
   const [viewerCount, setViewerCount] = useState(0)
   const [liveViewers, setLiveViewers] = useState([])
   const [gifts, setGifts] = useState([])
+  const [showScrollBtn, setShowScrollBtn] = useState(false) // NEW
   const chatEndRef = useRef(null)
+  const chatContainerRef = useRef(null) // NEW
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
   const docInputRef = useRef(null)
@@ -67,6 +69,24 @@ export default function App() {
       videoRef.current.srcObject = liveStream
     }
   }, [isLive, liveStream])
+
+  // NEW: SCROLL LISTENER
+  useEffect(() => {
+    const chatBox = chatContainerRef.current
+    if(!chatBox) return
+
+    const handleScroll = () => {
+      const isNearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 100
+      setShowScrollBtn(!isNearBottom)
+    }
+
+    chatBox.addEventListener("scroll", handleScroll)
+    return () => chatBox.removeEventListener("scroll", handleScroll)
+  }, [activeContact])
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   const bgColor = dark? "#0e0e0e" : "#ffffff"
   const textColor = dark? "#ffffff" : "#000"
@@ -205,7 +225,7 @@ export default function App() {
         liveComments.forEach((comment, index) => {
           setTimeout(() => {
             const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}))
+            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]}))
           }, (index + 1) * 1500)
         })
 
@@ -368,7 +388,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* BIG VISIBLE GIFTS */}
           <div style={{display: "flex", gap: "12px", justifyContent: "center", margin: "10px 0", background: "#1a1a1a", padding: "8px", borderRadius: "10px", flexWrap: "wrap"}}>
             <p style={{width: "100%", textAlign: "center", color: "#ff69b4", fontSize: "12px", margin: "0", fontWeight: "bold"}}>Send Gift:</p>
             {giftList.map(gift => (
@@ -394,36 +413,66 @@ export default function App() {
         <button onClick={clearAllData} style={{background: "orange", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>Reset</button>
       </div>
 
-      <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "50vh", overflowY: "auto"}}>
-        <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"} {isLive && `🔴 LIVE • ${viewerCount} viewers`}</h3>
-        {chats[activeContact].map((m, i) => (
-          <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
-            <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
+      {/* CHAT BOX WITH SCROLL BUTTON */}
+      <div style={{position: "relative"}}>
+        <div 
+          ref={chatContainerRef}
+          style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "50vh", overflowY: "auto"}}
+        >
+          <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"} {isLive && `🔴 LIVE • ${viewerCount} viewers`}</h3>
+          {chats[activeContact].map((m, i) => (
+            <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
+              <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
 
-            {m.video? (
-              <div style={{background: "#fff", padding: "6px", borderRadius: "12px", display: "inline-block", maxWidth: "60%"}}>
-                <video src={m.video} controls style={{width: "100%", borderRadius: "8px"}} />
-              </div>
-            ) : (
-              <span
-                onClick={() => m.hasAudio && playLastAudio()}
-                style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
-              >
-                {m.text}
-              </span>
-            )}
+              {m.video? (
+                <div style={{background: "#fff", padding: "6px", borderRadius: "12px", display: "inline-block", maxWidth: "60%"}}>
+                  <video src={m.video} controls style={{width: "100%", borderRadius: "8px"}} />
+                </div>
+              ) : (
+                <span
+                  onClick={() => m.hasAudio && playLastAudio()}
+                  style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
+                >
+                  {m.text}
+                </span>
+              )}
 
-            <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
-          </div>
-        ))}
+              <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
+            </div>
+          ))}
 
-        {typing && (
-          <div style={{fontSize: "11px", color: "#ff69b4", fontStyle: "italic", margin: "5px 0"}}>
-            {typing} <span className="dots">...</span>
-          </div>
+          {typing && (
+            <div style={{fontSize: "11px", color: "#ff69b4", fontStyle: "italic", margin: "5px 0"}}>
+              {typing} <span className="dots">...</span>
+            </div>
+          )}
+
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* SCROLL TO BOTTOM BUTTON - LIKE WHATSAPP */}
+        {showScrollBtn && (
+          <button 
+            onClick={scrollToBottom}
+            style={{
+              position: "absolute",
+              right: "15px",
+              bottom: "15px",
+              background: "linear-gradient(90deg, #ff69b4, #ffa500)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "50%",
+              width: "40px",
+              height: "40px",
+              fontSize: "20px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              cursor: "pointer",
+              zIndex: 10
+            }}
+          >
+            ⬇️
+          </button>
         )}
-
-        <div ref={chatEndRef} />
       </div>
 
       <div style={{marginTop: "8px", display: "flex", gap: "8px"}}>
