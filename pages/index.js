@@ -14,7 +14,7 @@ export default function App() {
   const fileInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
-  const lastAudioRef = useRef(null) // NEW: play immediately
+  const lastAudioRef = useRef(null)
 
   const contactColors = {
     Group: "#ff1493", Prof: "#ff69b4", Queen: "#ff7f50", Indigo: "#6a5acd", 
@@ -49,7 +49,7 @@ export default function App() {
   const textColor = dark? "#ffffff" : "#000"
   const chatBg = dark? "#1a1a1a" : "#f1f1f1"
 
-  const playBeep = () => { // NEW: PIM SOUND
+  const playBeep = () => {
     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT')
     audio.volume = 0.3
     audio.play()
@@ -96,44 +96,47 @@ export default function App() {
     }, 1000)
   }
 
-  const startRecording = async () => {
-    playBeep() // PIM START
-    setRecording(true)
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    mediaRecorderRef.current = new MediaRecorder(stream)
-    audioChunksRef.current = []
-    
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      audioChunksRef.current.push(e.data)
+  // CHANGED: TAP TO START/STOP
+  const toggleRecording = async () => {
+    if(!recording) {
+      // START RECORDING
+      playBeep()
+      setRecording(true)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorderRef.current = new MediaRecorder(stream)
+      audioChunksRef.current = []
+      
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data)
+      }
+      
+      mediaRecorderRef.current.onstop = () => {
+        playBeep()
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const audioUrl = URL.createObjectURL(audioBlob)
+        lastAudioRef.current = audioUrl
+        
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        const msg = {text: `🎤 Voice Note ▶️ Tap to play`, time, sender: user, hasAudio: true}
+        setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
+        
+        setTimeout(() => {
+          const reply = activeContact==="Group"? "Group: I heard your voice note! 👥" : "I heard your voice note! 🔊"
+          setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
+        }, 1000)
+        
+        stream.getTracks().forEach(track => track.stop())
+      }
+      
+      mediaRecorderRef.current.start()
+    } else {
+      // STOP RECORDING
+      setRecording(false)
+      mediaRecorderRef.current?.stop()
     }
-    
-    mediaRecorderRef.current.onstop = () => {
-      playBeep() // PIM STOP
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-      const audioUrl = URL.createObjectURL(audioBlob)
-      lastAudioRef.current = audioUrl // SAVE TO PLAY
-      
-      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `🎤 Voice Note ▶️ Tap to play`, time, sender: user, hasAudio: true}
-      setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
-      
-      setTimeout(() => {
-        const reply = activeContact==="Group"? "Group: I heard your voice note! 👥" : "I heard your voice note! 🔊"
-        setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: reply, time, sender: activeContact}]}))
-      }, 1000)
-      
-      stream.getTracks().forEach(track => track.stop())
-    }
-    
-    mediaRecorderRef.current.start()
   }
 
-  const stopRecording = () => {
-    setRecording(false)
-    mediaRecorderRef.current?.stop()
-  }
-
-  const playLastAudio = () => { // FIXED: PLAY ON TAP
+  const playLastAudio = () => {
     if(lastAudioRef.current) {
       new Audio(lastAudioRef.current).play()
     }
@@ -229,7 +232,7 @@ export default function App() {
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
             <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
             <span 
-              onClick={() => m.hasAudio && playLastAudio()} // TAP TO PLAY
+              onClick={() => m.hasAudio && playLastAudio()}
               style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
             >
               {m.text}
@@ -251,12 +254,9 @@ export default function App() {
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>🎥 Video</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
         
-        {/* SMALLER BUTTON */}
+        {/* TAP TO START/STOP */}
         <button 
-          onMouseDown={startRecording} 
-          onMouseUp={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
+          onClick={toggleRecording}
           style={{
             background: recording? "red" : "linear-gradient(90deg, #ff69b4, #ffa500)", 
             border: "none", 
@@ -266,7 +266,7 @@ export default function App() {
             borderRadius: "20px",
             fontWeight: "bold"
           }}>
-          🎤 {recording? "Rec..." : "Talk"}
+          🎤 {recording? "Stop" : "Talk"}
         </button>
         
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📹 Live</button>
