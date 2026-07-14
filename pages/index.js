@@ -12,7 +12,7 @@ export default function App() {
   const [recording, setRecording] = useState(false)
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
-  const videoInputRef = useRef(null) // NEW
+  const videoInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const lastAudioRef = useRef(null)
@@ -82,7 +82,7 @@ export default function App() {
   }
 
   const handleGallery = () => {fileInputRef.current?.click()}
-  const handleVideo = () => {videoInputRef.current?.click()} // NEW
+  const handleVideo = () => {videoInputRef.current?.click()}
 
   const handleFileSend = (e) => {
     const file = e.target.files[0]
@@ -98,12 +98,13 @@ export default function App() {
     }, 1000)
   }
 
-  // NEW: VIDEO SEND
+  // FIXED: SAVE REAL VIDEO + PLAY
   const handleVideoSend = (e) => {
     const file = e.target.files[0]
     if(!file) return
+    const videoUrl = URL.createObjectURL(file) // SAVE VIDEO
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    const msg = {text: `🎥 Sent Video: ${file.name}`, time, sender: user}
+    const msg = {text: `🎥 Video`, video: videoUrl, time, sender: user}
     
     setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], msg]}))
     
@@ -222,7 +223,7 @@ export default function App() {
   return (
     <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
       <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} />
-      <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSend} style={{display: "none"}} /> {/* NEW */}
+      <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSend} style={{display: "none"}} />
       
       <div style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", padding: "10px", borderRadius: "15px", marginBottom: "10px", textAlign: "center"}}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
@@ -246,12 +247,21 @@ export default function App() {
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
             <div style={{fontSize: "10px", color: contactColors[m.sender] || "#aaa", fontWeight: "bold"}}>{m.sender}</div>
-            <span 
-              onClick={() => m.hasAudio && playLastAudio()}
-              style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
-            >
-              {m.text}
-            </span>
+            
+            {/* VIDEO CARD - WHITE + MEDIUM + SMALLER THAN VOICE */}
+            {m.video? (
+              <div style={{background: "#fff", padding: "6px", borderRadius: "12px", display: "inline-block", maxWidth: "60%"}}>
+                <video src={m.video} controls style={{width: "100%", borderRadius: "8px"}} />
+              </div>
+            ) : (
+              <span 
+                onClick={() => m.hasAudio && playLastAudio()}
+                style={{background: m.sender===user? "linear-gradient(90deg, #ff69b4, #ffa500)" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block", maxWidth: "75%", cursor: m.hasAudio? "pointer" : "default"}}
+              >
+                {m.text}
+              </span>
+            )}
+            
             <div style={{fontSize: "10px", opacity: 0.6}}>{m.time}</div>
           </div>
         ))}
@@ -266,7 +276,7 @@ export default function App() {
 
       <div style={{display: "flex", gap: "10px", justifyContent: "space-around", marginTop: "10px"}}>
         <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
-        <button onClick={handleVideo} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎥 Video</button> {/* ACTIVE NOW */}
+        <button onClick={handleVideo} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎥 Video</button>
         <button style={{background: "none", border: "none", color: "#555", fontSize: "10px"}}>📄 Doc</button>
         
         <button 
