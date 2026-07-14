@@ -10,11 +10,13 @@ export default function App() {
     Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: []
   })
   const [recording, setRecording] = useState(false)
-  const [isLive, setIsLive] = useState(false) // NEW
+  const [isLive, setIsLive] = useState(false)
+  const [liveStream, setLiveStream] = useState(null) // NEW
   const chatEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
   const docInputRef = useRef(null)
+  const videoRef = useRef(null) // NEW
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
   const lastAudioRef = useRef(null)
@@ -47,6 +49,13 @@ export default function App() {
   }, [chats, user, profile])
 
   useEffect(() => {chatEndRef.current?.scrollIntoView({ behavior: "smooth" })}, [chats, activeContact])
+
+  // SHOW CAMERA WHEN LIVE STARTS
+  useEffect(() => {
+    if(isLive && videoRef.current && liveStream) {
+      videoRef.current.srcObject = liveStream
+    }
+  }, [isLive, liveStream])
 
   const bgColor = dark? "#0e0e0e" : "#ffffff"
   const textColor = dark? "#ffffff" : "#000"
@@ -130,32 +139,42 @@ export default function App() {
     }, 1000)
   }
 
-  // NEW: LIVE VIDEO
-  const toggleLive = () => {
+  // FIXED: REAL LIVE WITH CAMERA
+  const toggleLive = async () => {
     if(!isLive) {
-      setIsLive(true)
-      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `📹 ${user} is LIVE 🔴`, time, sender: user}
-      setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        setLiveStream(stream)
+        setIsLive(true)
 
-      // 6 AIs join live and comment
-      const liveComments = [
-        "Prof: Welcome to the live! 💡",
-        "Queen: Hi everyone! 👑",
-        "Indigo: This is fire 🔧",
-        "Boss: Let's go viral! 💰",
-        "Tech: Stream quality is good 💻",
-        "Gist: Omo I don join 😂"
-      ]
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        const msg = {text: `📹 ${user} is LIVE 🔴`, time, sender: user}
+        setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
 
-      liveComments.forEach((comment, index) => {
-        setTimeout(() => {
-          const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-          setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]}))
-        }, (index + 1) * 1500)
-      })
+        // 6 AIs join live and comment
+        const liveComments = [
+          "Prof: Welcome to the live! 💡",
+          "Queen: Hi everyone! 👑",
+          "Indigo: This is fire 🔧",
+          "Boss: Let's go viral! 💰",
+          "Tech: Stream quality is good 💻",
+          "Gist: Omo I don join 😂"
+        ]
 
+        liveComments.forEach((comment, index) => {
+          setTimeout(() => {
+            const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]}))
+          }, (index + 1) * 1500)
+        })
+
+      } catch(err) {
+        alert("Camera access denied. Please allow camera permission.")
+      }
     } else {
+      // STOP LIVE
+      liveStream?.getTracks().forEach(track => track.stop())
+      setLiveStream(null)
       setIsLive(false)
       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
       const msg = {text: `📹 Live ended`, time, sender: user}
@@ -280,6 +299,14 @@ export default function App() {
         <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | {profile.bio}</p>
       </div>
 
+      {/* LIVE VIDEO PREVIEW */}
+      {isLive && (
+        <div style={{background: "#000", borderRadius: "10px", marginBottom: "10px", padding: "5px"}}>
+          <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "8px", maxHeight: "250px"}} />
+          <div style={{color: "red", textAlign: "center", fontWeight: "bold", fontSize: "12px"}}>🔴 LIVE</div>
+        </div>
+      )}
+
       <div style={{margin: "8px 0", display: "flex", gap: "6px", flexWrap: "wrap"}}>
         {contacts.map(name => (
           <button key={name} onClick={() => setActiveContact(name)}
@@ -292,7 +319,7 @@ export default function App() {
         <button onClick={clearAllData} style={{background: "orange", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px", fontSize: "12px"}}>Reset</button>
       </div>
 
-      <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "60vh", overflowY: "auto"}}>
+      <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "50vh", overflowY: "auto"}}>
         <h3>{activeContact} {activeContact==="Group" && "👥 6 AIs"} {isLive && "🔴 LIVE"}</h3>
         {chats[activeContact].map((m, i) => (
           <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
@@ -342,7 +369,6 @@ export default function App() {
           🎤 {recording? "Stop" : "Talk"}
         </button>
 
-        {/* LIVE BUTTON */}
         <button
           onClick={toggleLive}
           style={{
