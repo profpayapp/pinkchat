@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
-import VoiceRoom from '@/components/VoiceRoom'
+'use client'
+import { useState } from 'react'
+import VoiceRoom from '../components/VoiceRoom'  <-- REPLACE WITH THIS
 
 export default function ChatPage() {
   const [activeTab, setActiveTab] = useState('Prof')
