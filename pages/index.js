@@ -1,4 +1,87 @@
 import React, { useState, useEffect, useRef } from "react"
+import AgoraRTC from "agora-rtc-sdk-ng";
+import { Mic, MicOff, PhoneOff } from "lucide-react";
+import { motion } from "framer-motion";
+
+const APP_ID = "67c28316a5e748ae8fd979ea7a699ce3";
+const CHANNEL = "pinkchat_voice_room";
+
+// VOICE ROOM COMPONENT
+function VoiceRoom({ onClose }) {
+  const [client] = useState(() => AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }));
+  const [localAudioTrack, setLocalAudioTrack] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      await client.join(APP_ID, CHANNEL, null, null);
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      setLocalAudioTrack(audioTrack);
+      await client.publish([audioTrack]);
+
+      client.on("user-published", async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        if (mediaType === "audio") {
+          user.audioTrack.play();
+        }
+        setUsers((prev) => [...prev, user]);
+      });
+
+      client.on("user-unpublished", (user) => {
+        setUsers((prev) => prev.filter((u) => u.uid!== user.uid));
+      });
+    };
+    init();
+
+    return () => {
+      localAudioTrack?.close();
+      client.leave();
+    };
+  }, []);
+
+  const toggleMic = async () => {
+    await localAudioTrack.setEnabled(!isMuted);
+    setIsMuted(!isMuted);
+  };
+
+  return (
+    <motion.div 
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      style={{position: "fixed", bottom: 0, left: 0, right: 0, height: "300px", background: "linear-gradient(to top, #880e4f, #ad1457)", borderTopLeftRadius: "30px", borderTopRightRadius: "30px", padding: "20px", zIndex: 999}}
+    >
+      <div style={{textAlign: "center", marginBottom: "20px"}}>
+        <h2 style={{color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0}}>🔴 Open Voice Room</h2>
+        <p style={{color: "#f8bbd0", margin: 0}}>{users.length + 1} Live</p>
+      </div>
+
+      <div style={{display: "flex", gap: "15px", justifyContent: "center", marginBottom: "30px", flexWrap: "wrap"}}>
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+          <div style={{width: "70px", height: "70px", borderRadius: "50%", background: "#ec407a", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold"}}>YOU</div>
+          <p style={{color: "#fff", fontSize: "12px", marginTop: "5px"}}>{isMuted? <MicOff size={16}/> : <Mic size={16}/>}</p>
+        </div>
+        {users.map((user) => (
+          <div key={user.uid} style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+            <div style={{width: "70px", height: "70px", borderRadius: "50%", background: "#f06292", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold"}}>
+              {user.uid.toString().slice(-2)}
+            </div>
+            <p style={{color: "#fff", fontSize: "12px", marginTop: "5px"}}><Mic size={16}/></p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display: "flex", justifyContent: "center", gap: "20px"}}>
+        <button onClick={toggleMic} style={{width: "60px", height: "60px", borderRadius: "50%", background: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center"}}>
+          {isMuted? <MicOff className="text-pink-600" /> : <Mic className="text-pink-600" />}
+        </button>
+        <button onClick={onClose} style={{width: "60px", height: "60px", borderRadius: "50%", background: "red", border: "none", display: "flex", alignItems: "center", justifyContent: "center"}}>
+          <PhoneOff className="text-white" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function App() {
   const [dark, setDark] = useState(true)
@@ -17,6 +100,7 @@ export default function App() {
   const [liveViewers, setLiveViewers] = useState([])
   const [gifts, setGifts] = useState([])
   const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const [showVoice, setShowVoice] = useState(false) // <-- VOICE STATE ADDED
   const chatEndRef = useRef(null)
   const chatContainerRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -199,20 +283,6 @@ export default function App() {
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         const msg = {text: `📹 ${user} is LIVE 🔴 • 6 viewers`, time, sender: user}
         setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
-        const liveComments = [
-          `Prof: Welcome ${viewerCount} people watching! 💡`,
-          `Queen: Hi everyone! Thanks for joining 👑`,
-          `Indigo: Drop a comment if you can hear me 🔧`,
-          `Boss: Let's make this live viral! 💰`,
-          `Tech: Stream is stable 💻`,
-          `Gist: Omo the live is sweet o 😂`
-        ]
-        liveComments.forEach((comment, index) => {
-          setTimeout(() => {
-            const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}))
-          }, (index + 1) * 1500)
-        })
       } catch(err) {
         alert("Camera access denied. Please allow camera permission.")
       }
@@ -335,7 +405,7 @@ export default function App() {
   }
 
   return (
-    <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px"}}>
+    <div style={{background: bgColor, color: textColor, minHeight: "100vh", padding: "10px", paddingBottom: "80px"}}>
       <input type="file" ref={fileInputRef} onChange={handleFileSend} style={{display: "none"}} />
       <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSend} style={{display: "none"}} />
       <input type="file" accept=".pdf,.doc,.docx,.txt,.xlsx" ref={docInputRef} onChange={handleDocSend} style={{display: "none"}} />
@@ -350,23 +420,6 @@ export default function App() {
           <video ref={videoRef} autoPlay muted playsInline style={{width: "100%", borderRadius: "8px", maxHeight: "250px"}} />
           <div style={{color: "red", textAlign: "center", fontWeight: "bold", fontSize: "14px"}}>
             🔴 LIVE • {viewerCount} viewers 👁️
-          </div>
-          <div style={{display: "flex", gap: "5px", flexWrap: "wrap", justifyContent: "center", margin: "5px 0"}}>
-            {["Fan1", "Fan2", "Fan3"].map(fan => (
-              <button key={fan} onClick={() => joinLive(fan)} 
-                style={{background: "#ff69b4", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "10px", fontSize: "10px"}}>
-                + Join as {fan}
-              </button>
-            ))}
-          </div>
-          <div style={{display: "flex", gap: "12px", justifyContent: "center", margin: "10px 0", background: "#1a1a1a", padding: "8px", borderRadius: "10px", flexWrap: "wrap"}}>
-            <p style={{width: "100%", textAlign: "center", color: "#ff69b4", fontSize: "12px", margin: "0", fontWeight: "bold"}}>Send Gift:</p>
-            {giftList.map(gift => (
-              <button key={gift.name} onClick={() => sendGift(gift)}
-                style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", border: "none", borderRadius: "50%", width: "50px", height: "50px", fontSize: "24px", cursor: "pointer"}}>
-                {gift.emoji}
-              </button>
-            ))}
           </div>
         </div>
       )}
@@ -445,16 +498,26 @@ export default function App() {
         <button onClick={sendMessage} style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "25px", fontWeight: "bold"}}>Send</button>
       </div>
 
-      <div style={{display: "flex", gap: "10px", justifyContent: "space-around", marginTop: "10px"}}>
-        <button onClick={handleGallery} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📎 Gallery</button>
-        <button onClick={handleVideo} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>🎥 Video</button>
-        <button onClick={handleDoc} style={{background: "none", border: "none", color: textColor, fontSize: "10px"}}>📄 Doc</button>
+      {/* BOTTOM NAV BAR WITH VOICE BUTTON */}
+      <div style={{position: "fixed", bottom: 0, left: 0, right: 0, background: "linear-gradient(90deg, #ff69b4, #ffa500)", display: "flex", gap: "8px", justifyContent: "space-around", padding: "10px"}}>
+        
+        {/* VOICE BUTTON */}
+        <button 
+          onClick={() => setShowVoice(true)}
+          style={{background: "#fff", border: "none", color: "#ff69b4", fontSize: "11px", padding: "8px 12px", borderRadius: "20px", fontWeight: "bold"}}
+        >
+          Voice
+        </button>
+
+        <button onClick={handleGallery} style={{background: "none", border: "none", color: "#fff", fontSize: "10px"}}>📎 Gallery</button>
+        <button onClick={handleVideo} style={{background: "none", border: "none", color: "#fff", fontSize: "10px"}}>🎥 Video</button>
+        <button onClick={handleDoc} style={{background: "none", border: "none", color: "#fff", fontSize: "10px"}}>📄 Doc</button>
         <button
           onClick={toggleRecording}
           style={{
-            background: recording? "red" : "linear-gradient(90deg, #ff69b4, #ffa500)",
+            background: recording? "red" : "#fff",
             border: "none",
-            color: "#fff",
+            color: recording? "#fff" : "#ff69b4",
             fontSize: "11px",
             padding: "8px 14px",
             borderRadius: "20px",
@@ -465,15 +528,21 @@ export default function App() {
         <button
           onClick={toggleLive}
           style={{
-            background: isLive? "red" : "none",
+            background: isLive? "red" : "#fff",
             border: "none",
-            color: isLive? "#fff" : textColor,
+            color: isLive? "#fff" : "#ff69b4",
             fontSize: "10px",
-            fontWeight: isLive? "bold" : "normal"
+            fontWeight: "bold",
+            padding: "8px 12px",
+            borderRadius: "20px"
           }}>
-          📹 {isLive? "End Live" : "Live"}
+          📹 {isLive? "End" : "Live"}
         </button>
       </div>
+
+      {/* VOICE ROOM POPUP */}
+      {showVoice && <VoiceRoom onClose={() => setShowVoice(false)} />}
+
     </div>
   )
 }
