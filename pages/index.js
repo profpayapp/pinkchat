@@ -16,7 +16,6 @@ export default function App() {
   const [viewerCount, setViewerCount] = useState(0)
   const [liveViewers, setLiveViewers] = useState([])
   const [gifts, setGifts] = useState([])
-  const [coins, setCoins] = useState(0)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
   const chatEndRef = useRef(null)
   const chatContainerRef = useRef(null)
@@ -45,11 +44,9 @@ export default function App() {
     const savedUser = localStorage.getItem("crypto-prof-user") || ""
     const savedProfile = localStorage.getItem("crypto-prof-profile")
     const savedChats = localStorage.getItem("crypto-prof-chats")
-    const savedCoins = localStorage.getItem("crypto-prof-coins")
 
     setUser(savedUser)
     setProfile(savedProfile? JSON.parse(savedProfile) : {name: "", bio: ""})
-    setCoins(savedCoins? parseInt(savedCoins) : 0)
 
     if(savedChats) {
       const parsed = JSON.parse(savedChats)
@@ -62,9 +59,8 @@ export default function App() {
     if(user) {
       localStorage.setItem("crypto-prof-chats", JSON.stringify(chats))
       localStorage.setItem("crypto-prof-profile", JSON.stringify(profile))
-      localStorage.setItem("crypto-prof-coins", coins.toString())
     }
-  }, [chats, user, profile, coins])
+  }, [chats, user, profile])
 
   useEffect(() => {chatEndRef.current?.scrollIntoView({ behavior: "smooth" })}, [chats, activeContact])
 
@@ -174,12 +170,10 @@ export default function App() {
   }
 
   const sendGift = (gift) => {
-    setCoins(prev => prev + gift.coins)
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    const msg = {text: `${user} sent ${gift.emoji} ${gift.name}! [+${gift.coins} coins]`, time, sender: user}
+    const msg = {text: `${user} sent ${gift.emoji} ${gift.name}!`, time, sender: user}
     setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
     setGifts(prev => [...prev, gift])
-
     setTimeout(() => {
       const ai = ["Prof", "Queen", "Indigo"][Math.floor(Math.random()*3)]
       const reactions = {
@@ -216,7 +210,7 @@ export default function App() {
         liveComments.forEach((comment, index) => {
           setTimeout(() => {
             const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]))
+            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}))
           }, (index + 1) * 1500)
         })
       } catch(err) {
@@ -230,7 +224,7 @@ export default function App() {
       setViewerCount(0)
       setGifts([])
       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      const msg = {text: `📹 Live ended • ${viewerCount} viewers • Total: ${coins} coins`, time, sender: user}
+      const msg = {text: `📹 Live ended • ${viewerCount} viewers`, time, sender: user}
       setChats(prev => ({...prev, Group: [...prev.Group, msg]}))
     }
   }
@@ -349,11 +343,6 @@ export default function App() {
       <div style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", padding: "10px", borderRadius: "15px", marginBottom: "10px", textAlign: "center"}}>
         <h1 style={{color: "#fff", fontSize: "22px", margin: "0", fontWeight: "900"}}>PINKCHAT 💖</h1>
         <p style={{color: "#fff", fontSize: "10px", margin: "0"}}>by CRYPTO-PROF | {profile.bio}</p>
-        {isLive && (
-          <div style={{background: "#000", padding: "5px", borderRadius: "10px", marginTop: "5px", color: "#ffd700", fontWeight: "bold", fontSize: "14px"}}>
-            🪙 Total Coins: {coins}
-          </div>
-        )}
       </div>
 
       {isLive && (
@@ -374,9 +363,8 @@ export default function App() {
             <p style={{width: "100%", textAlign: "center", color: "#ff69b4", fontSize: "12px", margin: "0", fontWeight: "bold"}}>Send Gift:</p>
             {giftList.map(gift => (
               <button key={gift.name} onClick={() => sendGift(gift)}
-                style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", border: "none", borderRadius: "50%", width: "50px", height: "50px", fontSize: "24px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
+                style={{background: "linear-gradient(90deg, #ff69b4, #ffa500)", border: "none", borderRadius: "50%", width: "50px", height: "50px", fontSize: "24px", cursor: "pointer"}}>
                 {gift.emoji}
-                <span style={{fontSize: "8px", color: "#ffd700", fontWeight: "bold"}}>{gift.coins}</span>
               </button>
             ))}
           </div>
