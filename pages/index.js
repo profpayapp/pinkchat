@@ -216,7 +216,7 @@ export default function App() {
         liveComments.forEach((comment, index) => {
           setTimeout(() => {
             const t = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}))
+            setChats(prev => ({...prev, Group: [...prev.Group, {text: comment, time: t, sender: comment.split(":")[0]}]))
           }, (index + 1) * 1500)
         })
       } catch(err) {
