@@ -1,45 +1,67 @@
-'use client'
-import { useState } from 'react'
-import VoiceRoom from '../VoiceRoom'
-
-export default function ChatPage() {
-  const [activeTab, setActiveTab] = useState('Prof')
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#1a1a2e] text-white">
+      
       {/* HEADER */}
-      <header className="w-full bg-gradient-to-r from-[#FF1493] to-[#FF69B4] text-white text-center py-4 rounded-b-2xl shadow-lg">
-        <h1 className="text-2xl font-bold tracking-wide">PINKCHAT 💖</h1>
-        <p className="text-sm opacity-90 mt-1">by Crypto-Prof</p>
-      </header>
+      <div className="bg-[#FF1493] p-4 rounded-b-2xl shadow-lg">
+        <h1 className="text-3xl font-bold text-center text-white">
+          PINKCHAT 💖
+        </h1>
+        <p className="text-center text-sm text-white/90 mt-1">
+          By Crypto-Prof AI App Owner
+        </p>
+      </div>
 
-      {/* TABS */}
-      <div className="p-4 flex gap-2 flex-wrap">
-        {['Group', 'Prof', 'Queen', 'Indigo', 'Boss'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-full ${activeTab === tab? 'bg-pink-500' : 'bg-gray-700'}`}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* MODE BUTTONS */}
+      <div className="flex flex-wrap gap-2 p-4 justify-center">
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">👥 Group</button>
+        <button className="px-4 py-2 bg-[#FF1493] rounded-full text-sm font-semibold">Prof</button>
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">Queen</button>
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">Indigo</button>
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">Boss</button>
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">Tech</button>
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">Gist</button>
+        <button className="px-4 py-2 bg-gray-700 rounded-full text-sm">Light</button>
+        <button className="px-4 py-2 bg-red-600 rounded-full text-sm">Clear</button>
+        <button className="px-4 py-2 bg-yellow-500 text-black rounded-full text-sm">Reset</button>
       </div>
 
       {/* CHAT AREA */}
-      <div className="p-4">
-        <div className="bg-gray-800 rounded-lg p-4 min-h-[300px]">
-          <h2 className="font-bold text-xl mb-2">{activeTab}</h2>
-          <p>Hi! how are you doing today? 💖</p>
-          <p>Prof: let me explain this properly 💖</p>
-          <p>an I am waiting for your response</p>
+      <div className="p-4 space-y-4 h-[50vh] overflow-y-auto">
+        <div>
+          <p className="text-xs text-gray-400 ml-2">Prof</p>
+          <div className="bg-gray-800 p-3 rounded-2xl mt-1">
+            Prof: Let me explain this properly 💡
+          </div>
+        </div>
+        
+        <div className="text-right">
+          <p className="text-xs text-gray-400 mr-2">Crypto-Prof</p>
+          <div className="bg-[#FF1493] p-3 rounded-2xl inline-block">
+            How are doing today guy
+          </div>
         </div>
       </div>
 
-      {/* VOICE BUTTON - THIS IS THE NEW PART */}
-      <div className="p-4 border-t border-gray-800 bg-black sticky bottom-0">
-        <VoiceRoom channelName="prof-chat" />
+      {/* INPUT */}
+      <div className="p-4 flex gap-2">
+        <input 
+          type="text" 
+          placeholder="Message..." 
+          className="flex-1 bg-gray-800 rounded-full px-4 py-2 outline-none"
+        />
+        <button className="bg-[#FF1493] px-6 py-2 rounded-full font-semibold">Send</button>
       </div>
+
+      {/* FEATURE BUTTONS */}
+      <div className="flex justify-around p-3 border-t border-gray-800">
+        <button className="flex flex-col items-center text-xs">📎 Gallery</button>
+        <button className="flex flex-col items-center text-xs">🎥 Video</button>
+        <button className="flex flex-col items-center text-xs">📄 Doc</button>
+        <button className="flex flex-col items-center text-xs bg-[#FF1493] px-3 py-2 rounded-full">🎙️ Talk</button>
+        <button className="flex flex-col items-center text-xs">📡 Live</button>
+      </div>
+
     </div>
   )
 }
