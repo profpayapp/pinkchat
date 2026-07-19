@@ -73,7 +73,7 @@ export default function Home() {
   const [dark, setDark] = useState(true)
   const [user, setUser] = useState("")
   const [profile, setProfile] = useState({name: "", bio: ""})
-  const [activeContact, setActiveContact] = useState("Prof")
+  const [activeContact, setActiveContact] = useState("Group")
   const [input, setInput] = useState("")
   const [chats, setChats] = useState({ Group: [], Prof: [], Queen: [], Indigo: [], Boss: [], Tech: [], Gist: [] })
   const [recording, setRecording] = useState(false)
@@ -84,7 +84,7 @@ export default function Home() {
   const videoRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
-  const lastAudioRef = useRef(null)
+  const [lastAudio, setLastAudio] = useState(null)
 
   const bgColor = dark? "#0e0e0e" : "#ffffff"
   const textColor = dark? "#ffffff" : "#000"
@@ -105,17 +105,43 @@ export default function Home() {
   }}, [chats, user, profile])
 
   useEffect(() => { if(isLive && videoRef.current && liveStream) { videoRef.current.srcObject = liveStream }}, [isLive, liveStream])
+  
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [chats])
 
-  const handleLogin = () => { if(profile.name.trim()) { setUser(profile.name); localStorage.setItem("crypto-prof-user", profile.name) }
-  const sendMessage = () => { if(!input.trim()) return; const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); const newMsg = {text: input, time, sender: user}; setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], newMsg]})); setInput("") }
+  const handleLogin = () => { if(profile.name.trim()) { setUser(profile.name); localStorage.setItem("crypto-prof-user", profile.name) }}
+  
+  const sendMessage = () => { 
+    if(!input.trim()) return; 
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); 
+    const newMsg = {text: input, time, sender: user, hasAudio: false}; 
+    setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], newMsg]})); 
+    setInput("") 
+  }
   
   const toggleLive = async () => {
     if(!isLive) { const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); setLiveStream(stream); setIsLive(true) } 
     else { liveStream?.getTracks().forEach(track => track.stop()); setIsLive(false) }
   }
+  
   const toggleRecording = async () => {
-    if(!recording) { setRecording(true); const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorderRef.current = new MediaRecorder(stream); audioChunksRef.current = []; mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data); mediaRecorderRef.current.onstop = () => { const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); lastAudioRef.current = URL.createObjectURL(audioBlob); const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: `🎤 Voice Note ▶️`, time, sender: user, hasAudio: true}]})) }; mediaRecorderRef.current.start() } 
-    else { setRecording(false); mediaRecorderRef.current?.stop() }
+    if(!recording) { 
+      setRecording(true); 
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); 
+      mediaRecorderRef.current = new MediaRecorder(stream); 
+      audioChunksRef.current = []; 
+      mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data); 
+      mediaRecorderRef.current.onstop = () => { 
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); 
+        const audioUrl = URL.createObjectURL(audioBlob); 
+        setLastAudio(audioUrl);
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}); 
+        setChats(prev => ({...prev, [activeContact]: [...prev[activeContact], {text: `🎤 Voice Note`, time, sender: user, hasAudio: true, audioUrl: audioUrl}]})) 
+      }; 
+      mediaRecorderRef.current.start() 
+    } else { 
+      setRecording(false); 
+      mediaRecorderRef.current?.stop() 
+    }
   }
 
   if(!user) {
@@ -142,7 +168,14 @@ export default function Home() {
         {["Group", "Prof", "Queen", "Indigo", "Boss", "Tech", "Gist"].map(name => (<button key={name} onClick={() => setActiveContact(name)} style={{background: activeContact===name? "#FF1493" : "#333", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "15px"}}>{name}</button>))}
       </div>
       <div style={{background: chatBg, padding: "12px", borderRadius: "10px", height: "50vh", overflowY: "auto"}}>
-        {chats[activeContact].map((m, i) => (<div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}><span style={{background: m.sender===user? "#FF1493" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px"}}>{m.text}</span></div>))}
+        {chats[activeContact].map((m, i) => (
+          <div key={i} style={{textAlign: m.sender===user? "right" : "left", margin: "8px 0"}}>
+            <span style={{background: m.sender===user? "#FF1493" : "#444", color: "#fff", padding: "8px 12px", borderRadius: "15px", display: "inline-block"}}>
+              {m.hasAudio? <audio src={m.audioUrl} controls style={{width: "200px"}} /> : m.text}
+            </span>
+            <div style={{fontSize: "10px", color: "#aaa"}}>{m.time}</div>
+          </div>
+        ))}
         <div ref={chatEndRef} />
       </div>
       <div style={{marginTop: "8px", display: "flex", gap: "8px"}}>
@@ -155,6 +188,6 @@ export default function Home() {
         <button onClick={toggleLive} style={{background: isLive? "red" : "#fff", color: "#FF1493", border: "none", padding: "8px 12px", borderRadius: "20px"}}>📹 {isLive? "End" : "Live"}</button>
       </div>
       {showVoice && <VoiceRoom onClose={() => setShowVoice(false)} />}
-    </div> const handleLogin = () => { if(profile.name.trim()) { setUser(profile.name); localStorage.setItem("crypto-prof-user", profile.name) }}
+    </div>
   )
 }
