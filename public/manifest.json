@@ -2,7 +2,7 @@
   "name": "Channel Pink by Pinkchat",
   "short_name": "Channel Pink",
   "description": "AI-Powered Conversations for the Community",
-  "start_url": "/channel",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#FF1493",
