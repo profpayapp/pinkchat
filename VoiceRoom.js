@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 
-const APP_ID = "YOUR_AGORA_APP_ID" // <-- PUT YOUR AGORA ID HERE
+const APP_ID = "YOUR_AGORA_APP_ID" // <-- 67c28316a5e748ae8fd979ea7a699ce3
 const CHANNEL = "voice-room"
 
 export default function VoiceRoom({ onClose }) {
