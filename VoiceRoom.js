@@ -1,87 +1,79 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from "react"
 
-export default function VoiceRoom({ currentUser, addMessage }) {
+const APP_ID = "YOUR_AGORA_APP_ID"
+const CHANNEL = "voice-room"
+
+export default function VoiceRoom({ onClose }) {
+  const [client, setClient] = useState(null);
+  const [localAudioTrack, setLocalAudioTrack] = useState(null);
+  const [users, setUsers] = useState([]);
   const [isMuted, setIsMuted] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [inputText, setInputText] = useState('');
-  const chatEndRef = useRef(null);
-
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }
-
-  useEffect(scrollToBottom, [chatMessages]);
 
   const sendVoiceRoomMsg = () => {
     if(!inputText.trim()) return;
-    
-    const newMsg = { user: currentUser, text: inputText };
-    setChatMessages([...chatMessages, newMsg]);
-    
-    // Also send to main chat
-    addMessage(currentUser, `[Voice Room] ${inputText}`);
-    
+    setChatMessages([...chatMessages, {user: 'YOU', text: inputText}]);
     setInputText('');
   }
 
+  useEffect(() => {
+    let agoraClient;
+    let audioTrack;
+    const init = async () => {
+      const Agora = (await import("agora-rtc-sdk-ng")).default;
+      agoraClient = Agora.createClient({ mode: "rtc", codec: "vp8" });
+      setClient(agoraClient);
+      await agoraClient.join(APP_ID, CHANNEL, null, null);
+      audioTrack = await Agora.createMicrophoneAudioTrack();
+      setLocalAudioTrack(audioTrack);
+      await agoraClient.publish([audioTrack]);
+
+      agoraClient.on("user-published", async (user, mediaType) => {
+        await agoraClient.subscribe(user, mediaType);
+        if (mediaType === "audio") {
+          user.audioTrack.play();
+          setUsers((prev) => [...prev, user]);
+        }
+      });
+      agoraClient.on("user-unpublished", (user) => {
+        setUsers((prev) => prev.filter((u) => u.uid!== user.uid));
+      });
+    };
+    if(typeof window!== "undefined") init();
+    return () => {
+      localAudioTrack?.close();
+      client?.leave();
+    }
+  }, []);
+
+  const toggleMic = async () => {
+    if(localAudioTrack) {
+      await localAudioTrack.setEnabled(!isMuted);
+      setIsMuted(!isMuted);
+    }
+  }
+
   return (
-    <div className="voice-room">
-      <h3>🔴 Open Voice Room <span>1 Live</span></h3>
+    <div style={{position: 'fixed', bottom: 20, right: 20, width: 340, background: '#ff1493', padding: 16, borderRadius: 20, color: 'white', zIndex: 999}}>
+      <div style={{display:'flex', justifyContent:'space-between'}}><h3>🔴 Open Voice Room</h3><button onClick={onClose}>X</button></div>
+      <p>{users.length + 1} Live</p>
+      <div style={{width:70, height:70, borderRadius:'50%', background:'white', color:'#ff1493', textAlign:'center', paddingTop:15}}>YOU<br/>{isMuted? '🔇' : '🎤'}</div>
       
-      <div id="userGrid">
-        <div className="user-circle">
-          <div>YOU</div>
-          <small>🎤</small>
+      <div style={{height:150, background:'#1a1a1a', borderRadius:12, margin:'12px 0'}}>
+        <div style={{height:100, overflowY:'auto', padding:10}}>
+          {chatMessages.map((msg,i) => <div key={i}><b style={{color:'#ff1493'}}>{msg.user}:</b> {msg.text}</div>)}
+        </div>
+        <div style={{display:'flex', padding:8}}>
+          <input value={inputText} onChange={e=>setInputText(e.target.value)} placeholder="Chat in room..." style={{flex:1, background:'#333', color:'white', padding:8}}/>
+          <button onClick={sendVoiceRoomMsg} style={{background:'#ff1493', color:'white', padding:'8px 14px'}}>Send</button>
         </div>
       </div>
 
-      {/* VOICE ROOM CHAT BOX - NEW */}
-      <div className="voice-chat-box">
-        <div className="voice-chat-messages">
-          {chatMessages.map((msg, i) => (
-            <div key={i} className="msg">
-              <b>{msg.user}:</b> {msg.text}
-            </div>
-          ))}
-          <div ref={chatEndRef} />
-        </div>
-        <div className="voice-chat-input">
-          <input 
-            type="text" 
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendVoiceRoomMsg()}
-            placeholder="Chat in room..." 
-          />
-          <button onClick={sendVoiceRoomMsg}>Send</button>
-        </div>
+      <div style={{display:'flex', justifyContent:'center', gap:15}}>
+        <button onClick={toggleMic} style={{width:50, height:50, borderRadius:'50%'}}>{isMuted?'🔇':'🎤'}</button>
+        <button onClick={onClose} style={{width:50, height:50, borderRadius:'50%', background:'red'}}>❌</button>
       </div>
-
-      <div className="voice-controls">
-        <button onClick={() => setIsMuted(!isMuted)}>
-          {isMuted? '🔇' : '🎤'}
-        </button>
-        <button className="leave-btn">❌</button>
-      </div>
-
-      <style jsx>{`
-       .voice-room { background: #ff1493; padding: 20px; border-radius: 20px; color: white; }
-       .voice-room h3 { text-align: center; margin-bottom: 10px; }
-       .voice-room span { font-size: 12px; opacity: 0.8; }
-        #userGrid { display: flex; justify-content: center; margin: 15px 0; }
-       .user-circle { width: 70px; height: 70px; border-radius: 50%; background: white; color: #ff1493; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; }
-       .voice-chat-box { height: 140px; background: #1a1a1a; border-radius: 12px; margin: 10px 0; display: flex; flex-direction: column; border: 1px solid #333; }
-       .voice-chat-messages { flex: 1; overflow-y: auto; padding: 8px; font-size: 13px; }
-       .msg { margin: 4px 0; }
-       .msg b { color: #ff1493; }
-       .voice-chat-input { display: flex; padding: 8px; border-top: 1px solid #333; }
-       .voice-chat-input input { flex: 1; background: #333; border: none; color: white; padding: 8px; border-radius: 8px; outline: none; }
-       .voice-chat-input button { background: #ff1493; border: none; color: white; padding: 8px 14px; margin-left: 6px; border-radius: 8px; font-weight: bold; }
-       .voice-controls { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
-       .voice-controls button { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 20px; }
-       .voice-controls button:first-child { background: white; color: #ff1493; }
-       .leave-btn { background: red; color: white; }
-      `}</style>
     </div>
   )
 }
