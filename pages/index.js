@@ -2,9 +2,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#1a1a2e] text-white">
       
-      {/* HEADER */}
+      {/* HEADER - FIXED: Sharp Pink + Single Byline */}
       <div className="bg-[#FF1493] p-4 rounded-b-2xl shadow-lg">
-        <h1 className="text-3xl font-bold text-center text-white">
+        <h1 className="text-3xl font-bold text-center text-white flex items-center justify-center gap-2">
           PINKCHAT 💖
         </h1>
         <p className="text-center text-sm text-white/90 mt-1">
@@ -27,7 +27,7 @@ export default function Home() {
       </div>
 
       {/* CHAT AREA */}
-      <div className="p-4 space-y-4 h-[50vh] overflow-y-auto">
+      <div className="p-4 space-y-4 pb-32">
         <div>
           <p className="text-xs text-gray-400 ml-2">Prof</p>
           <div className="bg-gray-800 p-3 rounded-2xl mt-1">
@@ -41,24 +41,45 @@ export default function Home() {
             How are doing today guy
           </div>
         </div>
+
+        <div className="text-right">
+          <p className="text-xs text-gray-400 mr-2">Crypto-Prof</p>
+          <div className="bg-[#FF1493] p-3 rounded-2xl inline-block">
+            🎙️ Voice Note ▶️ Tap to play
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs text-gray-400 ml-2">Prof</p>
+          <div className="bg-gray-800 p-3 rounded-2xl mt-1">
+            I heard your voice note! 🔊
+          </div>
+        </div>
+
+        <div className="text-right">
+          <p className="text-xs text-gray-400 mr-2">Crypto-Prof</p>
+          <div className="bg-[#FF1493] p-3 rounded-2xl inline-block">
+            📄 Document: practice-questions-english
+          </div>
+        </div>
       </div>
 
       {/* INPUT */}
-      <div className="p-4 flex gap-2">
+      <div className="fixed bottom-16 left-0 right-0 p-4 flex gap-2 bg-[#1a1a2e]">
         <input 
           type="text" 
           placeholder="Message..." 
-          className="flex-1 bg-gray-800 rounded-full px-4 py-2 outline-none"
+          className="flex-1 bg-gray-800 rounded-full px-4 py-3 outline-none"
         />
-        <button className="bg-[#FF1493] px-6 py-2 rounded-full font-semibold">Send</button>
+        <button className="bg-[#FF1493] px-6 py-3 rounded-full font-semibold">Send</button>
       </div>
 
-      {/* FEATURE BUTTONS */}
-      <div className="flex justify-around p-3 border-t border-gray-800">
+      {/* FEATURE BUTTONS - ALL FEATURES BACK */}
+      <div className="fixed bottom-0 left-0 right-0 flex justify-around p-3 border-t border-gray-800 bg-[#1a1a2e]">
         <button className="flex flex-col items-center text-xs">📎 Gallery</button>
         <button className="flex flex-col items-center text-xs">🎥 Video</button>
         <button className="flex flex-col items-center text-xs">📄 Doc</button>
-        <button className="flex flex-col items-center text-xs bg-[#FF1493] px-3 py-2 rounded-full">🎙️ Talk</button>
+        <button className="flex flex-col items-center text-xs bg-[#FF1493] px-4 py-2 rounded-full">🎙️ Talk</button>
         <button className="flex flex-col items-center text-xs">📡 Live</button>
       </div>
 
