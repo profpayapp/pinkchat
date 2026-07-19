@@ -1,41 +1,52 @@
 import React, { useState, useEffect, useRef } from "react"
-import AgoraRTC from "agora-rtc-sdk-ng";
 import { Mic, MicOff, PhoneOff } from "lucide-react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+
+// This stops Agora from loading during build
+const AgoraRTC = dynamic(() => import("agora-rtc-sdk-ng"), { ssr: false });
 
 const APP_ID = "67c28316a5e748ae8fd979ea7a699ce3";
 const CHANNEL = "pinkchat_voice_room";
 
 function VoiceRoom({ onClose }) {
-  const [client] = useState(() => AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }));
+  const [client, setClient] = useState(null);
   const [localAudioTrack, setLocalAudioTrack] = useState(null);
   const [users, setUsers] = useState([]);
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
+    let agoraClient;
+    let audioTrack;
+    
     const init = async () => {
-      await client.join(APP_ID, CHANNEL, null, null);
-      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      const Agora = (await import("agora-rtc-sdk-ng")).default;
+      agoraClient = Agora.createClient({ mode: "rtc", codec: "vp8" });
+      setClient(agoraClient);
+      
+      await agoraClient.join(APP_ID, CHANNEL, null, null);
+      audioTrack = await Agora.createMicrophoneAudioTrack();
       setLocalAudioTrack(audioTrack);
-      await client.publish([audioTrack]);
+      await agoraClient.publish([audioTrack]);
 
-      client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
+      agoraClient.on("user-published", async (user, mediaType) => {
+        await agoraClient.subscribe(user, mediaType);
         if (mediaType === "audio") {
           user.audioTrack.play();
         }
         setUsers((prev) => [...prev, user]);
       });
 
-      client.on("user-unpublished", (user) => {
+      agoraClient.on("user-unpublished", (user) => {
         setUsers((prev) => prev.filter((u) => u.uid!== user.uid));
       });
     };
-    init();
+    
+    if(typeof window!== "undefined") init();
 
     return () => {
-      localAudioTrack?.close();
-      client.leave();
+      audioTrack?.close();
+      agoraClient?.leave();
     };
   }, []);
 
@@ -91,14 +102,8 @@ export default function Home() {
   const [recording, setRecording] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [liveStream, setLiveStream] = useState(null)
-  const [typing, setTyping] = useState("")
-  const [viewerCount, setViewerCount] = useState(0)
   const [showVoice, setShowVoice] = useState(false)
   const chatEndRef = useRef(null)
-  const chatContainerRef = useRef(null)
-  const fileInputRef = useRef(null)
-  const videoInputRef = useRef(null)
-  const docInputRef = useRef(null)
   const videoRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const audioChunksRef = useRef([])
@@ -109,20 +114,28 @@ export default function Home() {
   const chatBg = dark? "#1a1a1a" : "#f1f1f1"
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("crypto-prof-user") || ""
-    const savedProfile = localStorage.getItem("crypto-prof-profile")
-    const savedChats = localStorage.getItem("crypto-prof-chats")
-    setUser(savedUser)
-    setProfile(savedProfile? JSON.parse(savedProfile) : {name: "", bio: ""})
-    if(savedChats) setChats(JSON.parse(savedChats))
+    if(typeof window!== "undefined") {
+      const savedUser = localStorage.getItem("crypto-prof-user") || ""
+      const savedProfile = localStorage.getItem("crypto-prof-profile")
+      const savedChats = localStorage.getItem("crypto-prof-chats")
+      setUser(savedUser)
+      setProfile(savedProfile? JSON.parse(savedProfile) : {name: "", bio: ""})
+      if(savedChats) setChats(JSON.parse(savedChats))
+    }
   }, [])
 
   useEffect(() => {
-    if(user) {
+    if(user && typeof window!== "undefined") {
       localStorage.setItem("crypto-prof-chats", JSON.stringify(chats))
       localStorage.setItem("crypto-prof-profile", JSON.stringify(profile))
     }
   }, [chats, user, profile])
+
+  useEffect(() => {
+    if(isLive && videoRef.current && liveStream) {
+      videoRef.current.srcObject = liveStream
+    }
+  }, [isLive, liveStream])
 
   const handleLogin = () => {
     if(profile.name.trim()) {
@@ -144,11 +157,9 @@ export default function Home() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       setLiveStream(stream)
       setIsLive(true)
-      setViewerCount(6)
     } else {
       liveStream?.getTracks().forEach(track => track.stop())
       setIsLive(false)
-      setViewerCount(0)
     }
   }
 
