@@ -155,6 +155,6 @@ export default function Home() {
         <button onClick={toggleLive} style={{background: isLive? "red" : "#fff", color: "#FF1493", border: "none", padding: "8px 12px", borderRadius: "20px"}}>📹 {isLive? "End" : "Live"}</button>
       </div>
       {showVoice && <VoiceRoom onClose={() => setShowVoice(false)} />}
-    </div>
+    </div> const handleLogin = () => { if(profile.name.trim()) { setUser(profile.name); localStorage.setItem("crypto-prof-user", profile.name) }}
   )
 }
