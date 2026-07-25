@@ -1,5 +1,6 @@
 {
   "name": "pinkchat",
+<<<<<<< HEAD
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -17,5 +18,21 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^6.0.3",
     "vite": "^8.1.1"
+=======
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "agora-rtc-sdk-ng": "^4.22.2",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.263.1",
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+>>>>>>> 6eadc745d2f8fb9f6d0a3a035812740dc5cade0d
   }
 }
