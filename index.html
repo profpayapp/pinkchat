@@ -8,7 +8,22 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Paste your FULL working login + chat + live code here -->
+  <!-- YOUR LOGIN DIV GOES HERE -->
+  <div id="login">
+    <h1>Welcome to PinkChat 💖</h1>
+    <button onclick="login()">Login with Google</button>
+  </div>
+
+  <!-- YOUR CHAT DIV GOES HERE -->
+  <div id="chat" style="display:none;">
+    <h2>PinkChat</h2>
+    <div id="messages"></div>
+    <input id="messageInput" placeholder="Type message...">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="goLive()">Go Live</button>
+  </div>
+
+  <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
