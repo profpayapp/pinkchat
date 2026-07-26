@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PinkChat</title>
+  <title>PinkChat Voice</title>
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- YOUR LOGIN DIV GOES HERE -->
   <div id="login">
     <h1>Welcome to PinkChat 💖</h1>
     <button onclick="login()">Login with Google</button>
   </div>
 
-  <!-- YOUR CHAT DIV GOES HERE -->
-  <div id="chat" style="display:none;">
-    <h2>PinkChat</h2>
-    <div id="messages"></div>
-    <input id="messageInput" placeholder="Type message...">
-    <button onclick="sendMessage()">Send</button>
-    <button onclick="goLive()">Go Live</button>
+  <div id="app" style="display:none;">
+    <h2>PinkChat Voice Rooms</h2>
+    <button onclick="createRoom()">+ Create Voice Room</button>
+    <div id="rooms"></div>
+    <div id="voiceRoom" style="display:none;">
+      <h3 id="roomName"></h3>
+      <button onclick="leaveRoom()">Leave Room</button>
+      <div id="participants"></div>
+    </div>
   </div>
 
   <!-- FIREBASE -->
