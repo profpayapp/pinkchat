@@ -1,34 +1,24 @@
-<<<<<<< HEAD
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pinkchat</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-=======
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="/logo.png" />
 <title>PinkChat - Connect Live</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
   body{background:linear-gradient(135deg,#ff9a9e,#fad0c4);min-height:100vh;color:#333}
   .container{max-width:1200px;margin:0 auto;padding:20px}
   .login-box{background:white;padding:30px;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,0.1);max-width:400px;margin:100px auto;text-align:center}
-  .login-box h1{color:#ff6b9d;margin-bottom:20px}
+  .login-box h1{color:#ff6b9d;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:10px}
+  .login-box h1 img{width:50px;height:50px;border-radius:50%}
   .login-box input{width:100%;padding:12px;margin:10px 0;border:2px solid #fad0c4;border-radius:10px}
   .btn{background:linear-gradient(135deg,#ff6b9d,#ff9a9e);color:white;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-weight:bold;width:100%;margin-top:10px}
   .btn:hover{opacity:0.9}
   .dashboard{display:none}
   .header{display:flex;justify-content:space-between;align-items:center;background:white;padding:15px;border-radius:15px;margin-bottom:20px}
+  .header h2{display:flex;align-items:center;gap:10px}
+  .header h2 img{width:40px;height:40px;border-radius:50%}
   .chat-box{background:white;border-radius:15px;padding:20px;height:400px;overflow-y:auto;margin-bottom:20px}
   .msg{margin:10px 0;padding:10px;border-radius:10px;max-width:70%}
   .me{background:#ff6b9d;color:white;margin-left:auto}
@@ -45,7 +35,7 @@
   
   <!-- LOGIN SCREEN -->
   <div id="login" class="login-box">
-    <h1>💗 PinkChat</h1>
+    <h1><img src="/logo.png" alt="PinkChat Logo" />💗 PinkChat</h1>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
     <button class="btn" onclick="login()">Login</button>
@@ -55,7 +45,7 @@
   <!-- DASHBOARD -->
   <div id="dashboard" class="dashboard">
     <div class="header">
-      <h2>Welcome to PinkChat</h2>
+      <h2><img src="/logo.png" alt="PinkChat Logo" />Welcome to PinkChat</h2>
       <button class="btn" onclick="logout()" style="width:auto">Logout</button>
     </div>
 
@@ -108,7 +98,7 @@
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     createUserWithEmailAndPassword(auth, email, password)
-    .catch(err => alert(err.message));
+    .catch(err => err.message));
   }
 
   window.logout = () => signOut(auth);
@@ -162,5 +152,4 @@
 
 </script>
 </body>
->>>>>>> 6eadc745d2f8fb9f6d0a3a035812740dc5cade0d
 </html>
